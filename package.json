@@ -1,0 +1,38 @@
+{
+  "name": "lib",
+  "version": "0.0.1",
+  "description": "Shared code manager",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beautifulbits/lib.git"
+  },
+  "bin": "./src/exec.js",
+  "keywords": [
+    "shared",
+    "library",
+    "shared",
+    "components",
+    "code",
+    "manager"
+  ],
+  "type": "module",
+  "author": "Nathaniel Velez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/beautifulbits/lib/issues"
+  },
+  "homepage": "https://github.com/beautifulbits/lib#readme",
+  "dependencies": {
+    "boxen": "^7.0.0",
+    "cli-table": "^0.3.11",
+    "consola": "^2.15.3",
+    "enquirer": "^2.3.6",
+    "mkdirp": "^1.0.4",
+    "recursive-readdir-async": "^1.2.1",
+    "yargs": "^17.6.0"
+  }
+}

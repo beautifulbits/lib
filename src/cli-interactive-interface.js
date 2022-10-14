@@ -43,8 +43,8 @@ export class CliInteractiveInterface {
       choices: [
         INTERACTIVE_CLI_COMMANDS.listInstalledPackages,
         INTERACTIVE_CLI_COMMANDS.listRemotePackages,
+        INTERACTIVE_CLI_COMMANDS.getRemotePackageLatestVersion,
         INTERACTIVE_CLI_COMMANDS.publishPackage,
-        INTERACTIVE_CLI_COMMANDS.initPackageDirectory,
         INTERACTIVE_CLI_COMMANDS.exit,
       ],
     });
@@ -136,8 +136,94 @@ export class CliInteractiveInterface {
             this.runPublishSelectLibraryPrompt();
             break;
 
+          case INTERACTIVE_CLI_COMMANDS.getRemotePackageLatestVersion:
+            this.runRemotePackageLatestVersionSelectLibraryPrompt();
+            break;
+
           case INTERACTIVE_CLI_COMMANDS.exit:
             process.exit();
+        }
+      })
+      .catch(this.promptErrorHandler);
+  }
+
+  /* ===================== REMOTE PACKAGE LATEST VERSION ==================== */
+
+  async runRemotePackageLatestVersionSelectLibraryPrompt() {
+    const selectPrompt = await this.getSelectLibraryPrompt();
+
+    await selectPrompt
+      .run()
+      .then(async (answer) => {
+        switch (answer) {
+          case INTERACTIVE_CLI_COMMANDS.showAll:
+            await this.runRemotePackageLatestVersionSelectPackagePrompt();
+            break;
+
+          case INTERACTIVE_CLI_COMMANDS.exit:
+            this.runMainPrompt();
+            break;
+
+          default:
+            this.runRemotePackageLatestVersionSelectCollectionPrompt(answer);
+        }
+      })
+      .catch(this.promptErrorHandler);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async runRemotePackageLatestVersionSelectCollectionPrompt(selectedLibrary) {
+    const selectPrompt = await this.getSelectCollectionPrompt(selectedLibrary);
+
+    await selectPrompt
+      .run()
+      .then(async (answer) => {
+        switch (answer) {
+          case INTERACTIVE_CLI_COMMANDS.showAll:
+            this.runRemotePackageLatestVersionSelectPackagePrompt(
+              selectedLibrary
+            );
+            break;
+
+          case INTERACTIVE_CLI_COMMANDS.exit:
+            this.runMainPrompt();
+            break;
+
+          default:
+            await this.runRemotePackageLatestVersionSelectPackagePrompt(
+              selectedLibrary,
+              answer
+            );
+            this.runMainPrompt();
+        }
+      })
+      .catch(this.promptErrorHandler);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async runRemotePackageLatestVersionSelectPackagePrompt(
+    selectedLibrary,
+    selectedCollection
+  ) {
+    const selectPrompt = await this.getSelectPackagePrompt(
+      selectedLibrary,
+      selectedCollection
+    );
+
+    await selectPrompt
+      .run()
+      .then(async (answer) => {
+        switch (answer) {
+          case INTERACTIVE_CLI_COMMANDS.exit:
+            this.runMainPrompt();
+            break;
+
+          default:
+            await this.remoteLibrary.getRemotePackageLatestVersion(
+              answer,
+              true
+            );
+            this.runMainPrompt();
         }
       })
       .catch(this.promptErrorHandler);

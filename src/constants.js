@@ -5,6 +5,7 @@ export const INTERACTIVE_CLI_COMMANDS = {
   listRemotePackages: `List remote packages`,
   listRemotePackageVersions: `List remote package versions`,
   getInstalledPackageVersion: `Get installed package version`,
+  getRemotePackageLatestVersion: `Get package latest published version`,
   initPackageDirectory: `Init package (directory)`,
   initPackageSingleFile: `Init package (single file)`,
   publishPackage: `Publish package`,

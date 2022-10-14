@@ -2,7 +2,8 @@ import recursiveReaddir from 'recursive-readdir-async';
 import consola from 'consola';
 import path from 'path';
 import { showPackagesAsTable } from './show-packages-as-table.js';
-import { LIB_CONFIG_FILENAME } from './constants.js';
+import { LIB_CONFIG_FILENAME, UNPUBLISHED_VERSION } from './constants.js';
+import boxen from 'boxen';
 
 /* ========================================================================== */
 /*                               REMOTE LIBRARY                               */
@@ -14,6 +15,8 @@ export class RemoteLibrary {
     this.packageFileGenerator = packageFileGenerator;
     this.verbose = verbose;
   }
+
+  /* =========================== SCANNING LIBRARY =========================== */
 
   /* ------------------------------------------------------------------------ */
   async findLibConfigFiles() {
@@ -78,6 +81,30 @@ export class RemoteLibrary {
     });
   }
 
+  /* =========================== LISTING PACKAGES =========================== */
+
+  /* ------------------------------------------------------------------------ */
+  async getInstalledLibraries() {
+    await this.getInstalledPackagesCatalog();
+    return Object.keys(this.packagesCatalog);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async getInstalledCollections(selectedLibrary) {
+    await this.getInstalledPackagesCatalog();
+    return Object.keys(this.packagesCatalog[selectedLibrary]);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async getInstalledPackages(selectedLibrary, selectedCollection) {
+    await this.getInstalledPackagesCatalog();
+    return getPackagesFromCatalog(
+      this.packagesCatalog,
+      selectedLibrary,
+      selectedCollection
+    );
+  }
+
   /* ------------------------------------------------------------------------ */
   async showRemotePackagesAsTable(
     selectedLibrary,
@@ -85,7 +112,7 @@ export class RemoteLibrary {
     selectedPackage
   ) {
     await this.getPublishedPackagesCatalog();
-    console.log();
+
     showPackagesAsTable(
       this.packagesCatalog,
       selectedLibrary,
@@ -94,9 +121,12 @@ export class RemoteLibrary {
     );
   }
 
+  /* ======================== GETTING PACKAGE DETAILS ======================= */
+
   /* ------------------------------------------------------------------------ */
   async findPublishedPackageMetadata(selectedPackage, selectedVersion) {
     let packageConfig;
+    let packagesConfig = [];
 
     await this.getPublishedPackagesCatalog();
 
@@ -110,25 +140,89 @@ export class RemoteLibrary {
           const packageVersions = collection[packageName];
 
           Object.keys(packageVersions).forEach((versionNumber) => {
-            if (
-              packageName === selectedPackage &&
-              versionNumber === selectedVersion
-            ) {
-              packageConfig = collection[packageName][versionNumber];
+            if (selectedVersion) {
+              if (
+                packageName === selectedPackage &&
+                versionNumber === selectedVersion
+              ) {
+                packageConfig = collection[packageName][versionNumber];
+              }
+            } else {
+              if (packageName === selectedPackage) {
+                packagesConfig.push(collection[packageName][versionNumber]);
+              }
             }
           });
         });
       });
     });
 
-    if (!packageConfig && this.verbose) {
-      consola.warn(
-        `Config for package ${selectedPackage}@${selectedVersion} not found.`
-      );
-    }
+    if (selectedVersion) {
+      if (!packageConfig && this.verbose) {
+        consola.warn(
+          `Config for package ${selectedPackage}@${selectedVersion} not found.`
+        );
+      }
 
-    return packageConfig;
+      return packageConfig;
+    } else {
+      return packagesConfig;
+    }
   }
+
+  /* ------------------------------------------------------------------------ */
+  async getRemotePackageLatestVersion(packageName, show = false) {
+    const packagesMetadata = await this.findPublishedPackageMetadata(
+      packageName
+    );
+
+    let latestVersion = UNPUBLISHED_VERSION;
+    packagesMetadata.forEach((packageMetadata) => {
+      const packageVersion = packageMetadata.config.version;
+      if (
+        packageVersion > latestVersion ||
+        latestVersion === UNPUBLISHED_VERSION
+      ) {
+        latestVersion = packageVersion;
+      }
+    });
+    if (show) {
+      consola.log(boxen(`${packageName}@${latestVersion}`));
+    }
+    return latestVersion;
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async grabPackageFilesAndMetadataForPublish(packageName) {
+    const { path, config } = await this.findPackageMetadata(packageName);
+
+    try {
+      const files = await recursiveReaddir.list(path, {
+        ignoreFolders: true,
+        extensions: true,
+        readContent: true,
+        encoding: `utf8`,
+      });
+
+      const packageFiles = files.map((file) => {
+        return {
+          ...file,
+          relativePath: file.path.replace(this.cliWorkingDir, ''),
+        };
+      });
+
+      return {
+        path,
+        config,
+        packageFiles,
+      };
+    } catch (recursiveReaddirError) {
+      consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+      process.exit(1);
+    }
+  }
+
+  /* ========================== PUBLISHING PACKAGES ========================= */
 
   /* ------------------------------------------------------------------------ */
   async publishPackage({ name, version, files, packageLocalRelativePath }) {

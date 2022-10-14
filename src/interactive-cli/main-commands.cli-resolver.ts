@@ -1,17 +1,30 @@
 import { INTERACTIVE_CLI_COMMANDS, UNPUBLISHED_VERSION } from '../constants.js';
+import { LocalLibrary } from '../local-library.js';
+import { RemoteLibrary } from '../remote-library.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
+import { LocalPackagesListingCliResolver } from './local-packages-listing.cli-resolver.js';
+import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
+import { PackagePublishingCliResolver } from './package-publishing.cli-resolver.js';
+import { RemotePackageLatestVersionCliResolver } from './remote-package-latest-version.cli-resolver.js';
 
 /* ========================================================================== */
 /*                         MAIN COMMANDS CLI RESOLVER                         */
 /* ========================================================================== */
 export class MainCommandsCliResolver {
+  verbose: boolean;
+  localLibrary: LocalLibrary;
+  remoteLibrary: RemoteLibrary;
+  mainCommandsCliPrompt: MainCommandsCliPrompt;
+  remotePackageLatestVersionCliResolver: RemotePackageLatestVersionCliResolver;
+  packagePublishingCliResolver: PackagePublishingCliResolver;
+  localPackagesListingCliResolver: LocalPackagesListingCliResolver;
+
   /* ------------------------------------------------------------------------ */
   init({
     verbose = true,
     localLibrary,
     remoteLibrary,
     mainCommandsCliPrompt,
-    mainCommandsCliResolver,
     remotePackageLatestVersionCliResolver,
     packagePublishingCliResolver,
     localPackagesListingCliResolver,
@@ -20,7 +33,6 @@ export class MainCommandsCliResolver {
     this.localLibrary = localLibrary;
     this.remoteLibrary = remoteLibrary;
     this.mainCommandsCliPrompt = mainCommandsCliPrompt;
-    this.mainCommandsCliResolver = mainCommandsCliResolver;
     this.remotePackageLatestVersionCliResolver =
       remotePackageLatestVersionCliResolver;
     this.packagePublishingCliResolver = packagePublishingCliResolver;

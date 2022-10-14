@@ -2,15 +2,16 @@
   "name": "lib",
   "version": "0.0.1",
   "description": "Shared code manager",
-  "main": "./src/index.js",
+  "main": "./build/index.js",
+  "bin": "./build/exec.js",
   "scripts": {
+    "start": "tsc -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/beautifulbits/lib.git"
   },
-  "bin": "./src/exec.js",
   "keywords": [
     "shared",
     "library",
@@ -34,5 +35,10 @@
     "mkdirp": "^1.0.4",
     "recursive-readdir-async": "^1.2.1",
     "yargs": "^17.6.0"
+  },
+  "devDependencies": {
+    "@types/cli-table": "^0.3.1",
+    "@types/node": "^18.8.5",
+    "typescript": "^4.8.4"
   }
 }

@@ -3,17 +3,23 @@ import {
   INTERACTIVE_CLI_COMMANDS,
   VERSION_UPDATE_TYPES,
 } from '../constants.js';
-
-const { Select } = enquirer;
+import { LocalLibrary } from '../local-library.js';
+import { RemoteLibrary } from '../remote-library.js';
 import { printSpacingBetweenPrompts } from './interactive-cli.helpers.js';
+
+// @ts-ignore
+const { Select } = enquirer;
 
 /* ========================================================================== */
 /*                           CLI INTERACTIVE PROMPTS                          */
 /* ========================================================================== */
 export class MainCommandsCliPrompt {
+  verbose: boolean;
+  localLibrary: LocalLibrary;
+  remoteLibrary: RemoteLibrary;
+
   /* ------------------------------------------------------------------------ */
   init({ verbose = true, localLibrary, remoteLibrary }) {
-    console.log('here', this);
     this.verbose = verbose;
     this.localLibrary = localLibrary;
     this.remoteLibrary = remoteLibrary;

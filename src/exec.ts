@@ -5,7 +5,7 @@ import { InteractiveCli } from './interactive-cli/interactive-cli.js';
 import { PackageFileGenerator } from './package-file-generator.js';
 
 const remoteLibraryPath = `/Users/Nathaniel/Code/lib`;
-const libDir = `/src/lib`;
+const libDir = `/src/lib/`;
 
 (async () => {
   const packageFileGenerator = new PackageFileGenerator({

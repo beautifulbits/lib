@@ -10,11 +10,25 @@ import {
 } from './constants.js';
 import { showPackagesAsTable } from './show-packages-as-table.js';
 import { getPackagesFromCatalog } from './get-packages-from-catalog.js';
+import { PackageFileGenerator } from './package-file-generator.js';
+import { RemoteLibrary } from './remote-library';
+import { TReaddirFileExtended } from './@types/readdir-file.js';
+import { TPackageMetadata } from './@types/package-metadata';
+import { TPackageConfig } from './@types/package-config.js';
 
 /* ========================================================================== */
 /*                                LOCAL LIBRARY                               */
 /* ========================================================================== */
 export class LocalLibrary {
+  cliWorkingDir: string;
+  libDir: string;
+  libPath: string;
+  packageFileGenerator: PackageFileGenerator;
+  verbose: boolean;
+  libConfigFiles;
+  packagesCatalog;
+  remoteLibrary: RemoteLibrary;
+
   /* ------------------------------------------------------------------------ */
   constructor({
     localLibraryDirectory,
@@ -120,9 +134,9 @@ export class LocalLibrary {
 
   /* ------------------------------------------------------------------------ */
   async showInstalledPackagesAsTable(
-    selectedLibrary,
-    selectedCollection,
-    selectedPackage
+    selectedLibrary?: string,
+    selectedCollection?: string,
+    selectedPackage?: string
   ) {
     await this.getInstalledPackagesCatalog();
     showPackagesAsTable(
@@ -136,8 +150,10 @@ export class LocalLibrary {
   /* ======================== GETTING PACKAGE DETAILS ======================= */
 
   /* ------------------------------------------------------------------------ */
-  async findPackageMetadata(selectedPackage) {
-    let packageConfig;
+  async findPackageMetadata(
+    selectedPackage: string
+  ): Promise<TPackageMetadata | undefined> {
+    let packageMetadata;
 
     await this.getInstalledPackagesCatalog();
 
@@ -160,63 +176,78 @@ export class LocalLibrary {
 
             const latestVersion = versions[0];
             if (collection[packageName][latestVersion]) {
-              packageConfig = collection[packageName][latestVersion];
+              packageMetadata = collection[packageName][latestVersion];
             }
           }
         });
       });
     });
 
-    if (!packageConfig) {
+    if (!packageMetadata) {
       consola.warn(`Config for package ${selectedPackage} not found.`);
     }
 
-    return packageConfig;
+    return packageMetadata;
   }
 
   /* ------------------------------------------------------------------------ */
   async getInstalledPackageVersion(packageName) {
-    const { config } = await this.findPackageMetadata(packageName);
-    if (config && config.version) {
-      return String(config.version);
+    const packageMetadata = await this.findPackageMetadata(packageName);
+
+    if (packageMetadata?.config?.version) {
+      return String(packageMetadata.config.version);
     }
     return UNPUBLISHED_VERSION;
   }
 
   /* ------------------------------------------------------------------------ */
-  async grabPackageFilesAndMetadataForPublish(packageName) {
-    const { path, config } = await this.findPackageMetadata(packageName);
+  async grabPackageFilesAndMetadataForPublish(packageName: string): Promise<
+    | {
+        path: string;
+        config: TPackageConfig;
+        packageFiles: TReaddirFileExtended[];
+      }
+    | undefined
+  > {
+    const packageMetadata = await this.findPackageMetadata(packageName);
 
-    try {
-      const files = await recursiveReaddir.list(path, {
-        ignoreFolders: true,
-        extensions: true,
-        readContent: true,
-        encoding: `utf8`,
-      });
+    if (packageMetadata?.path && packageMetadata?.config) {
+      const { path, config } = packageMetadata;
+      try {
+        const files: TReaddirFileExtended[] = await recursiveReaddir.list(
+          path,
+          {
+            ignoreFolders: true,
+            extensions: true,
+            readContent: true,
+            encoding: `utf8`,
+          }
+        );
 
-      const packageFiles = files.map((file) => {
+        const packageFiles = files.map((file) => {
+          return {
+            ...file,
+            relativePath: file.path.replace(this.cliWorkingDir, ''),
+          };
+        });
+
         return {
-          ...file,
-          relativePath: file.path.replace(this.cliWorkingDir, ''),
+          path,
+          config,
+          packageFiles,
         };
-      });
-
-      return {
-        path,
-        config,
-        packageFiles,
-      };
-    } catch (recursiveReaddirError) {
-      consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
-      process.exit(1);
+      } catch (recursiveReaddirError) {
+        consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+        process.exit(1);
+      }
     }
+    return undefined;
   }
 
   /* =========================== UPDATING PACKAGES ========================== */
 
   /* ------------------------------------------------------------------------ */
-  async updatePackageVersion(packageName, updateType) {
+  async updatePackageVersion(packageName: string, updateType?: string) {
     let newVersion;
 
     const currentVersion = await this.getInstalledPackageVersion(packageName);
@@ -252,6 +283,9 @@ export class LocalLibrary {
             VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR
           );
           break;
+        case undefined:
+          newVersion = NEW_PACKAGE_INITIAL_VERSION;
+          break;
         default:
           consola.warn(
             `Error determining new version for package ${packageName}: update type ${updateType} not supported.`
@@ -267,16 +301,22 @@ export class LocalLibrary {
         );
 
       if (!remotePackageConfig) {
-        const { config, path } = await this.findPackageMetadata(packageName);
-        const { name, library, collection } = config;
-        this.packageFileGenerator.generateLocalConfigFile({
-          name,
-          library,
-          collection,
-          version: newVersion,
-          packagePath: path,
-        });
-        return true;
+        const packageMetadata = await this.findPackageMetadata(packageName);
+        if (packageMetadata?.config && packageMetadata?.path) {
+          const { config, path } = packageMetadata;
+          const { name, library, collection } = config;
+          this.packageFileGenerator.generateLocalConfigFile({
+            name,
+            library,
+            collection,
+            version: newVersion,
+            packagePath: path,
+          });
+          return true;
+        } else {
+          consola.warn(`Error finding ${packageName} config file.`);
+          return false;
+        }
       } else {
         consola.warn(
           `Version ${newVersion} of ${packageName} has already been published.`
@@ -290,24 +330,29 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async publishPackage(packageName, updateType) {
+  async publishPackage(packageName: string, updateType?: string) {
     const isUpdateSuccess = await this.updatePackageVersion(
       packageName,
       updateType
     );
 
     if (isUpdateSuccess) {
-      const { path, packageFiles, config } =
+      const packagesFilesAndMetadata =
         await this.grabPackageFilesAndMetadataForPublish(packageName);
 
-      await this.remoteLibrary.publishPackage({
-        name: packageName,
-        library: config.library,
-        collection: config.collection,
-        version: config.version,
-        files: packageFiles,
-        packageLocalRelativePath: path.replace(this.cliWorkingDir, ''),
-      });
+      if (
+        packagesFilesAndMetadata?.path &&
+        packagesFilesAndMetadata?.packageFiles &&
+        packagesFilesAndMetadata?.config
+      ) {
+        const { path, packageFiles, config } = packagesFilesAndMetadata;
+        await this.remoteLibrary.publishPackage({
+          name: packageName,
+          version: config.version,
+          files: packageFiles,
+          packageLocalRelativePath: path.replace(this.cliWorkingDir, ''),
+        });
+      }
     }
   }
 }

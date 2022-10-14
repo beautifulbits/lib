@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import boxen from 'boxen';
 import mkdirp from 'mkdirp';
+import consola from 'consola';
 import {
   LIB_CONFIG_FILENAME,
   NEW_PACKAGE_INITIAL_VERSION,
@@ -12,6 +13,8 @@ import {
 /*                        PACKAGE CONFIG FILE GENERATOR                       */
 /* ========================================================================== */
 export class PackageFileGenerator {
+  verbose: boolean;
+
   /* ------------------------------------------------------------------------ */
   constructor({ verbose = false }) {
     this.verbose = verbose;

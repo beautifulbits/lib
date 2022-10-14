@@ -1,4 +1,5 @@
 import Table from 'cli-table';
+import consola from 'consola';
 
 export function showPackagesAsTable(
   packagesCatalog,

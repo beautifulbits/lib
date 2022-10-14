@@ -1,10 +1,20 @@
-import { INTERACTIVE_CLI_COMMANDS } from '../constants.js';
+import { INTERACTIVE_CLI_COMMANDS, UNPUBLISHED_VERSION } from '../constants.js';
+import { LocalLibrary } from '../local-library.js';
+import { RemoteLibrary } from '../remote-library.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
+import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
+import { MainCommandsCliResolver } from './main-commands.cli-resolver.js';
 
 /* ========================================================================== */
-/*                 REMOTE PACKAGE LATEST VERSION CLI RESOLVER                 */
+/*                       PACKAGE PUBLISHING CLI RESOLVER                      */
 /* ========================================================================== */
-export class RemotePackageLatestVersionCliResolver {
+export class PackagePublishingCliResolver {
+  verbose: boolean;
+  localLibrary: LocalLibrary;
+  remoteLibrary: RemoteLibrary;
+  mainCommandsCliPrompt: MainCommandsCliPrompt;
+  mainCommandsCliResolver: MainCommandsCliResolver;
+
   /* ------------------------------------------------------------------------ */
   init({
     verbose = true,
@@ -20,6 +30,7 @@ export class RemotePackageLatestVersionCliResolver {
     this.mainCommandsCliResolver = mainCommandsCliResolver;
   }
 
+  /* ------------------------------------------------------------------------ */
   async resolveSelectLibraryPrompt() {
     const selectPrompt =
       await this.mainCommandsCliPrompt.getSelectLibraryPrompt();
@@ -29,7 +40,7 @@ export class RemotePackageLatestVersionCliResolver {
       .then(async (answer) => {
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
-            await this.resolveSelectPackagePrompt();
+            this.resolveSelectPackagePrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
@@ -64,14 +75,16 @@ export class RemotePackageLatestVersionCliResolver {
 
           default:
             await this.resolveSelectPackagePrompt(selectedLibrary, answer);
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
         }
       })
       .catch(promptErrorHandler);
   }
 
   /* ------------------------------------------------------------------------ */
-  async resolveSelectPackagePrompt(selectedLibrary, selectedCollection) {
+  async resolveSelectPackagePrompt(
+    selectedLibrary?: string,
+    selectedCollection?: string
+  ) {
     const selectPrompt =
       await this.mainCommandsCliPrompt.getSelectPackagePrompt(
         selectedLibrary,
@@ -87,13 +100,27 @@ export class RemotePackageLatestVersionCliResolver {
             break;
 
           default:
-            await this.remoteLibrary.getRemotePackageLatestVersion(
-              answer,
-              true
-            );
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            const installedVersion =
+              await this.localLibrary.getInstalledPackageVersion(answer);
+
+            if (installedVersion === UNPUBLISHED_VERSION) {
+              await this.localLibrary.publishPackage(answer);
+              this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            } else {
+              this.resolveUpdateTypePrompt(answer);
+            }
         }
       })
       .catch(promptErrorHandler);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async resolveUpdateTypePrompt(packageName) {
+    const selectPrompt = this.mainCommandsCliPrompt.getSelectUpdateTypePrompt();
+
+    await selectPrompt.run().then(async (answer) => {
+      await this.localLibrary.publishPackage(packageName, answer);
+      this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+    });
   }
 }

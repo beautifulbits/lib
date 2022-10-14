@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { LocalLibrary } from './local-library.js';
 import { RemoteLibrary } from './remote-library.js';
-import { CliInteractiveInterface } from './cli-interactive-interface.js';
+import { InteractiveCli } from './interactive-cli/interactive-cli.js';
 import { PackageFileGenerator } from './package-file-generator.js';
 
 const remoteLibraryPath = `/Users/Nathaniel/Code/lib`;
@@ -25,11 +25,11 @@ const libDir = `/src/lib`;
     remoteLibrary,
   });
 
-  const cliInteractiveInterface = new CliInteractiveInterface({
+  const interactiveCli = new InteractiveCli({
     verbose: false,
     localLibrary,
     remoteLibrary,
   });
 
-  cliInteractiveInterface.runMainPrompt();
+  interactiveCli.init();
 })();

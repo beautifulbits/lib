@@ -30,6 +30,8 @@ export class LocalLibrary {
     this.remoteLibrary = remoteLibrary;
   }
 
+  /* =========================== SCANNING LIBRARY =========================== */
+
   /* ------------------------------------------------------------------------ */
   async findLibConfigFiles() {
     try {
@@ -92,11 +94,46 @@ export class LocalLibrary {
     });
   }
 
+  /* =========================== LISTING PACKAGES =========================== */
+
   /* ------------------------------------------------------------------------ */
   async getInstalledLibraries() {
     await this.getInstalledPackagesCatalog();
     return Object.keys(this.packagesCatalog);
   }
+
+  /* ------------------------------------------------------------------------ */
+  async getInstalledCollections(selectedLibrary) {
+    await this.getInstalledPackagesCatalog();
+    return Object.keys(this.packagesCatalog[selectedLibrary]);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async getInstalledPackages(selectedLibrary, selectedCollection) {
+    await this.getInstalledPackagesCatalog();
+    return getPackagesFromCatalog(
+      this.packagesCatalog,
+      selectedLibrary,
+      selectedCollection
+    );
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async showInstalledPackagesAsTable(
+    selectedLibrary,
+    selectedCollection,
+    selectedPackage
+  ) {
+    await this.getInstalledPackagesCatalog();
+    showPackagesAsTable(
+      this.packagesCatalog,
+      selectedLibrary,
+      selectedCollection,
+      selectedPackage
+    );
+  }
+
+  /* ======================== GETTING PACKAGE DETAILS ======================= */
 
   /* ------------------------------------------------------------------------ */
   async findPackageMetadata(selectedPackage) {
@@ -138,37 +175,6 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledCollections(selectedLibrary) {
-    await this.getInstalledPackagesCatalog();
-    return Object.keys(this.packagesCatalog[selectedLibrary]);
-  }
-
-  /* ------------------------------------------------------------------------ */
-  async getInstalledPackages(selectedLibrary, selectedCollection) {
-    await this.getInstalledPackagesCatalog();
-    return getPackagesFromCatalog(
-      this.packagesCatalog,
-      selectedLibrary,
-      selectedCollection
-    );
-  }
-
-  /* ------------------------------------------------------------------------ */
-  async showInstalledPackagesAsTable(
-    selectedLibrary,
-    selectedCollection,
-    selectedPackage
-  ) {
-    await this.getInstalledPackagesCatalog();
-    showPackagesAsTable(
-      this.packagesCatalog,
-      selectedLibrary,
-      selectedCollection,
-      selectedPackage
-    );
-  }
-
-  /* ------------------------------------------------------------------------ */
   async getInstalledPackageVersion(packageName) {
     const { config } = await this.findPackageMetadata(packageName);
     if (config && config.version) {
@@ -176,6 +182,38 @@ export class LocalLibrary {
     }
     return UNPUBLISHED_VERSION;
   }
+
+  /* ------------------------------------------------------------------------ */
+  async grabPackageFilesAndMetadataForPublish(packageName) {
+    const { path, config } = await this.findPackageMetadata(packageName);
+
+    try {
+      const files = await recursiveReaddir.list(path, {
+        ignoreFolders: true,
+        extensions: true,
+        readContent: true,
+        encoding: `utf8`,
+      });
+
+      const packageFiles = files.map((file) => {
+        return {
+          ...file,
+          relativePath: file.path.replace(this.cliWorkingDir, ''),
+        };
+      });
+
+      return {
+        path,
+        config,
+        packageFiles,
+      };
+    } catch (recursiveReaddirError) {
+      consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+      process.exit(1);
+    }
+  }
+
+  /* =========================== UPDATING PACKAGES ========================== */
 
   /* ------------------------------------------------------------------------ */
   async updatePackageVersion(packageName, updateType) {
@@ -248,36 +286,6 @@ export class LocalLibrary {
     } else {
       consola.warn(`Error updating ${packageName} config file.`);
       return false;
-    }
-  }
-
-  /* ------------------------------------------------------------------------ */
-  async grabPackageFilesAndMetadataForPublish(packageName) {
-    const { path, config } = await this.findPackageMetadata(packageName);
-
-    try {
-      const files = await recursiveReaddir.list(path, {
-        ignoreFolders: true,
-        extensions: true,
-        readContent: true,
-        encoding: `utf8`,
-      });
-
-      const packageFiles = files.map((file) => {
-        return {
-          ...file,
-          relativePath: file.path.replace(this.cliWorkingDir, ''),
-        };
-      });
-
-      return {
-        path,
-        config,
-        packageFiles,
-      };
-    } catch (recursiveReaddirError) {
-      consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
-      process.exit(1);
     }
   }
 

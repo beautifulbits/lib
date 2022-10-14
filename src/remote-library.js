@@ -230,7 +230,7 @@ export class RemoteLibrary {
       name,
       version
     );
-    console.log('packageConfig', packageConfig);
+
     if (packageConfig) {
       consola.error(`Package ${name}@${version} already published`);
     } else {

@@ -327,6 +327,7 @@ export class LocalLibrary {
             collection,
             version: newVersion,
             packagePath: path,
+            rootPath: this.cliWorkingDir,
           });
           return true;
         } else {

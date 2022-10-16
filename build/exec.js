@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import sourceMapSupport from 'source-map-support';
+sourceMapSupport.install();
 import { LocalLibrary } from './local-library.js';
 import { RemoteLibrary } from './remote-library.js';
 import { InteractiveCli } from './interactive-cli/interactive-cli.js';

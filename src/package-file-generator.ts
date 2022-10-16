@@ -27,18 +27,21 @@ export class PackageFileGenerator {
     library,
     collection,
     packagePath,
+    rootPath,
   }: {
     name: string;
     version: string;
     library: string;
     collection: string;
     packagePath: string;
+    rootPath: string;
   }) {
     const packageConfig = {
       name,
       library,
       collection,
       version: version ? version : NEW_PACKAGE_INITIAL_VERSION,
+      path: packagePath.replace(rootPath, ''),
     };
 
     const fileContents = JSON.stringify(packageConfig, null, 2);

@@ -72,7 +72,7 @@ export class RemoteLibrary {
     await this.findLibConfigFiles();
 
     this.packagesCatalog = {};
-    console.log('this.libConfigFiles', this.libConfigFiles);
+
     this.libConfigFiles.forEach((configFile) => {
       const configData = JSON.parse(configFile.data);
       const { library, collection, name, version } = configData;
@@ -299,12 +299,13 @@ export class RemoteLibrary {
           file.name,
         );
 
-        await this.packageFileGenerator.generateFile({
-          basePath: this.remoteLibraryPath,
-          directoryRelativePath: directoryRelativePathForVersion,
-          fileRelativePath: fileRelativePathForVersion,
-          fileContents: file.data,
-        });
+        console.log('packageConfig', packageConfig);
+        // await this.packageFileGenerator.generateFile({
+        //   basePath: this.remoteLibraryPath,
+        //   directoryRelativePath: directoryRelativePathForVersion,
+        //   fileRelativePath: fileRelativePathForVersion,
+        //   fileContents: file.data,
+        // });
       });
       consola.log(`Package ${name}@${version} successfully published!`);
     }

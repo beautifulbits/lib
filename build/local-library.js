@@ -244,6 +244,8 @@ export class LocalLibrary {
                     version: config.version,
                     files: packageFiles,
                     packageLocalRelativePath: path.replace(this.cliWorkingDir, ''),
+                    collection: config.collection,
+                    library: config.library,
                 });
             }
         }

@@ -140,7 +140,12 @@ export class RemoteLibrary {
             });
         }
         if (show) {
-            consola.log(boxen(`${packageName}@${latestVersion}`));
+            if (latestVersion === UNPUBLISHED_VERSION) {
+                consola.log(boxen(latestVersion));
+            }
+            else {
+                consola.log(boxen(`${packageName}@${latestVersion}`));
+            }
         }
         return latestVersion;
     }
@@ -176,23 +181,22 @@ export class RemoteLibrary {
     }
     /* ========================== PUBLISHING PACKAGES ========================= */
     /* ------------------------------------------------------------------------ */
-    async publishPackage({ name, version, files, packageLocalRelativePath, }) {
+    async publishPackage({ name, version, files, packageLocalRelativePath, library, collection, }) {
         const packageConfig = await this.findPublishedPackageMetadata(name, version);
         if (packageConfig) {
             consola.error(`Package ${name}@${version} already published`);
         }
         else {
             files.forEach(async (file) => {
-                const packageVersionBasePath = path.join(packageLocalRelativePath, version);
+                const packageVersionBasePath = path.join(library, collection, version);
                 const directoryRelativePathForVersion = path.join(packageVersionBasePath, file.relativePath.replace(packageLocalRelativePath, ''));
                 const fileRelativePathForVersion = path.join(packageVersionBasePath, file.relativePath.replace(packageLocalRelativePath, ''), file.name);
-                console.log('packageConfig', packageConfig);
-                // await this.packageFileGenerator.generateFile({
-                //   basePath: this.remoteLibraryPath,
-                //   directoryRelativePath: directoryRelativePathForVersion,
-                //   fileRelativePath: fileRelativePathForVersion,
-                //   fileContents: file.data,
-                // });
+                await this.packageFileGenerator.generateFile({
+                    basePath: this.remoteLibraryPath,
+                    directoryRelativePath: directoryRelativePathForVersion,
+                    fileRelativePath: fileRelativePathForVersion,
+                    fileContents: file.data,
+                });
             });
             consola.log(`Package ${name}@${version} successfully published!`);
         }

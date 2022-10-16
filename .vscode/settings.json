@@ -1,3 +1,7 @@
 {
-  "cSpell.words": ["beautifulbits", "consola", "Fullname", "kebabcase"]
+  "cSpell.words": ["beautifulbits", "consola", "Fullname", "kebabcase"],
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/build": true
+  }
 }

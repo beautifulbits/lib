@@ -1,0 +1,87 @@
+module.exports = {
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: './tsconfig.json',
+    sourceType: 'module',
+  },
+  plugins: [
+    '@typescript-eslint/eslint-plugin',
+    'filename-rules',
+    'jest',
+    'prettier',
+  ],
+  extends: [
+    'plugin:@typescript-eslint/eslint-recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/recommended',
+    'plugin:jest/recommended',
+    'plugin:jest/style',
+    'plugin:prettier/recommended',
+    'prettier',
+  ],
+  root: true,
+  env: {
+    node: true,
+    jest: true,
+  },
+  ignorePatterns: ['.eslintrc.js'],
+  rules: {
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/interface-name-prefix': 'off',
+    '@typescript-eslint/naming-convention': [
+      'error',
+      {
+        selector: 'variable',
+        types: ['boolean'],
+        format: ['PascalCase'],
+        prefix: ['is', 'should', 'has', 'can', 'did', 'will', 'use'],
+      },
+      {
+        selector: ['function'],
+        format: ['camelCase', 'PascalCase'],
+        leadingUnderscore: 'allow',
+      },
+      {
+        selector: 'variable',
+        format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+      },
+      {
+        selector: 'typeParameter',
+        format: ['PascalCase'],
+        prefix: ['T'],
+      },
+      {
+        selector: 'interface',
+        format: ['PascalCase'],
+        prefix: ['I'],
+      },
+    ],
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+    ],
+    '@typescript-eslint/no-unused-vars': [2, { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-use-before-define': [1],
+    '@typescript-eslint/no-var-requires': 'off',
+    'arrow-body-style': ['error', 'as-needed'],
+    'filename-rules/match': [2, 'kebabcase'],
+    'import/no-extraneous-dependencies': [
+      'error',
+      {
+        devDependencies: ['**/*.spec.[jt]s', '**/*.e2e-spec.[jt]s'],
+      },
+    ],
+    'import/no-unresolved': 0,
+    'import/prefer-default-export': 'off',
+    'jest/prefer-strict-equal': 'error',
+    'jest/prefer-to-have-length': 'warn',
+    'no-use-before-define': [0],
+    'prettier/prettier': 'error',
+    quotes: 'off',
+    '@typescript-eslint/quotes': [2, 'backtick', { avoidEscape: true }],
+  },
+};

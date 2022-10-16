@@ -27,6 +27,12 @@ export class PackageFileGenerator {
     library,
     collection,
     packagePath,
+  }: {
+    name: string;
+    version: string;
+    library: string;
+    collection: string;
+    packagePath: string;
   }) {
     const packageConfig = {
       name,
@@ -42,13 +48,13 @@ export class PackageFileGenerator {
       await fs.promises.writeFile(configFilePath, fileContents);
       if (this.verbose) {
         consola.log(
-          `Config file for package ${name} created: ${configFilePath}`
+          `Config file for package ${name} created: ${configFilePath}`,
         );
       }
     } catch (writeFileError) {
       consolaGlobalInstance.error(
         `Unable to create config file for ${name}:`,
-        writeFileError
+        writeFileError,
       );
     }
   }
@@ -59,6 +65,11 @@ export class PackageFileGenerator {
     directoryRelativePath,
     fileRelativePath,
     fileContents,
+  }: {
+    basePath: string;
+    directoryRelativePath: string;
+    fileRelativePath: string;
+    fileContents: string;
   }) {
     const directoryPath = path.join(basePath, directoryRelativePath);
     const filePath = path.join(basePath, fileRelativePath);
@@ -85,7 +96,7 @@ export class PackageFileGenerator {
             titleAlignment: 'center',
             borderStyle: 'double',
             borderColor: 'green',
-          })
+          }),
         );
       }
     } catch (writeFileError) {

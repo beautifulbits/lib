@@ -1,7 +1,4 @@
-import {
-  INTERACTIVE_CLI_COMMANDS,
-  UNPUBLISHED_VERSION,
-} from '../helpers/constants.js';
+import { INTERACTIVE_CLI_COMMANDS } from '../helpers/constants.js';
 import { LocalLibrary } from '../local-library.js';
 import { RemoteLibrary } from '../remote-library.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
@@ -10,17 +7,28 @@ import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
 import { PackagePublishingCliResolver } from './package-publishing.cli-resolver.js';
 import { RemotePackageLatestVersionCliResolver } from './remote-package-latest-version.cli-resolver.js';
 
-/* ========================================================================== */
-/*                         MAIN COMMANDS CLI RESOLVER                         */
-/* ========================================================================== */
-export class MainCommandsCliResolver {
-  verbose: boolean;
+/* ================================ INTERFACE =============================== */
+interface IMainCommandsCliResolverInitFn {
+  verbose?: boolean;
   localLibrary: LocalLibrary;
   remoteLibrary: RemoteLibrary;
   mainCommandsCliPrompt: MainCommandsCliPrompt;
   remotePackageLatestVersionCliResolver: RemotePackageLatestVersionCliResolver;
   packagePublishingCliResolver: PackagePublishingCliResolver;
   localPackagesListingCliResolver: LocalPackagesListingCliResolver;
+}
+
+/* ========================================================================== */
+/*                         MAIN COMMANDS CLI RESOLVER                         */
+/* ========================================================================== */
+export class MainCommandsCliResolver {
+  verbose?: boolean;
+  localLibrary?: LocalLibrary;
+  remoteLibrary?: RemoteLibrary;
+  mainCommandsCliPrompt?: MainCommandsCliPrompt;
+  remotePackageLatestVersionCliResolver?: RemotePackageLatestVersionCliResolver;
+  packagePublishingCliResolver?: PackagePublishingCliResolver;
+  localPackagesListingCliResolver?: LocalPackagesListingCliResolver;
 
   /* ------------------------------------------------------------------------ */
   init({
@@ -31,7 +39,7 @@ export class MainCommandsCliResolver {
     remotePackageLatestVersionCliResolver,
     packagePublishingCliResolver,
     localPackagesListingCliResolver,
-  }) {
+  }: IMainCommandsCliResolverInitFn) {
     this.verbose = verbose;
     this.localLibrary = localLibrary;
     this.remoteLibrary = remoteLibrary;
@@ -44,12 +52,20 @@ export class MainCommandsCliResolver {
 
   /* ------------------------------------------------------------------------ */
   async resolveMainCommandsPrompt() {
+    if (!this.mainCommandsCliPrompt) return;
+
     const selectPrompt =
       await this.mainCommandsCliPrompt.getMainCommandsPrompt();
 
     await selectPrompt
       .run()
-      .then(async (answer) => {
+      .then(async (answer: string) => {
+        if (!this.mainCommandsCliPrompt) return;
+        if (!this.localPackagesListingCliResolver) return;
+        if (!this.remoteLibrary) return;
+        if (!this.packagePublishingCliResolver) return;
+        if (!this.remotePackageLatestVersionCliResolver) return;
+
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.listInstalledPackages:
             this.localPackagesListingCliResolver.resolveSelectLibraryPrompt();

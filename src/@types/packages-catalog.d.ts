@@ -5,13 +5,13 @@ type TPackageVersions = {
 };
 
 type TCollectionPackages = {
-  [packageName: string]: TPackageVersions[];
+  [packageName: string]: TPackageVersions;
 };
 
 export type TLibraryCollections = {
-  [collectionName: string]: TCollectionPackages[];
+  [collectionName: string]: TCollectionPackages;
 };
 
-export type TRemotePackageCatalog = {
-  [libraryName: string]: TLibraryCollections[];
+export type TPackagesCatalog = {
+  [libraryName: string]: TLibraryCollections;
 };

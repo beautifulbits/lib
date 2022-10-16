@@ -1,6 +1,7 @@
 import Table from 'cli-table';
 import consola from 'consola';
-export function showPackagesAsTable(packagesCatalog, selectedLibrary, selectedCollection, selectedPackage) {
+export function showLocalPackagesAsTable(packagesCatalog, selectedLibrary, selectedCollection, selectedPackage) {
+    console.log('packagesCatalog', JSON.stringify(packagesCatalog, null, 2));
     const table = new Table({
         head: [`Package`, `Version`, `Collection`, `Library`],
     });
@@ -11,9 +12,9 @@ export function showPackagesAsTable(packagesCatalog, selectedLibrary, selectedCo
                 const collection = library[collectionName];
                 if (!selectedCollection || selectedCollection === collectionName) {
                     Object.keys(collection).forEach((packageName) => {
-                        const packageVersions = collection[packageName];
+                        const collectionPackages = collection[packageName];
                         if (!selectedPackage || selectedPackage === packageName) {
-                            Object.keys(packageVersions).forEach((version) => {
+                            Object.keys(collectionPackages).forEach((version) => {
                                 table.push([packageName, version, collectionName, libraryName]);
                             });
                         }
@@ -24,4 +25,3 @@ export function showPackagesAsTable(packagesCatalog, selectedLibrary, selectedCo
     });
     consola.log(table.toString());
 }
-//# sourceMappingURL=show-packages-as-table.js.map

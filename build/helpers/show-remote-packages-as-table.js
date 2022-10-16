@@ -1,6 +1,6 @@
 import Table from 'cli-table';
 import consola from 'consola';
-export function showPackagesAsTable(packagesCatalog, selectedLibrary, selectedCollection, selectedPackage) {
+export function showRemotePackagesAsTable(packagesCatalog, selectedLibrary, selectedCollection, selectedPackage) {
     const table = new Table({
         head: [`Package`, `Version`, `Collection`, `Library`],
     });
@@ -24,4 +24,3 @@ export function showPackagesAsTable(packagesCatalog, selectedLibrary, selectedCo
     });
     consola.log(table.toString());
 }
-//# sourceMappingURL=show-packages-as-table.js.map

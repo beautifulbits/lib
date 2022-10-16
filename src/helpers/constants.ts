@@ -18,11 +18,11 @@ export const INTERACTIVE_CLI_COMMANDS = {
   showAll: `Show all`,
 };
 
-export const VERSION_UPDATE_TYPES = {
-  patch: `patch`,
-  minor: `minor`,
-  major: `major`,
-};
+export enum VERSION_UPDATE_TYPES {
+  patch = `patch`,
+  minor = `minor`,
+  major = `major`,
+}
 
 export const VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR = '.';
 

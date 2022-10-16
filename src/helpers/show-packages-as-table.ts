@@ -1,11 +1,12 @@
 import Table from 'cli-table';
 import consola from 'consola';
+import { TPackagesCatalog } from '../@types/packages-catalog';
 
 export function showPackagesAsTable(
-  packagesCatalog,
-  selectedLibrary,
-  selectedCollection,
-  selectedPackage
+  packagesCatalog: TPackagesCatalog,
+  selectedLibrary?: string,
+  selectedCollection?: string,
+  selectedPackage?: string,
 ) {
   const table = new Table({
     head: [`Package`, `Version`, `Collection`, `Library`],

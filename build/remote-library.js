@@ -14,6 +14,8 @@ export class RemoteLibrary {
         this.remoteLibraryPath = path;
         this.packageFileGenerator = packageFileGenerator;
         this.verbose = verbose;
+        this.packagesCatalog = {};
+        this.libConfigFiles = [];
     }
     /* =========================== SCANNING LIBRARY =========================== */
     /* ------------------------------------------------------------------------ */
@@ -42,6 +44,7 @@ export class RemoteLibrary {
     async getPublishedPackagesCatalog() {
         await this.findLibConfigFiles();
         this.packagesCatalog = {};
+        console.log('this.libConfigFiles', this.libConfigFiles);
         this.libConfigFiles.forEach((configFile) => {
             const configData = JSON.parse(configFile.data);
             const { library, collection, name, version } = configData;
@@ -174,7 +177,7 @@ export class RemoteLibrary {
     }
     /* ========================== PUBLISHING PACKAGES ========================= */
     /* ------------------------------------------------------------------------ */
-    async publishPackage({ name, version, files, packageLocalRelativePath }) {
+    async publishPackage({ name, version, files, packageLocalRelativePath, }) {
         const packageConfig = await this.findPublishedPackageMetadata(name, version);
         if (packageConfig) {
             consola.error(`Package ${name}@${version} already published`);
@@ -195,3 +198,4 @@ export class RemoteLibrary {
         }
     }
 }
+//# sourceMappingURL=remote-library.js.map

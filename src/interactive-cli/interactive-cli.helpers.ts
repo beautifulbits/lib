@@ -4,6 +4,6 @@ export function printSpacingBetweenPrompts() {
   consola.log(`\n`);
 }
 
-export function promptErrorHandler(promptError) {
+export function promptErrorHandler(promptError: Error) {
   consola.error('Error reading prompt answer.', promptError);
 }

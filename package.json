@@ -37,8 +37,19 @@
     "yargs": "^17.6.0"
   },
   "devDependencies": {
+    "@types/boxen": "^3.0.1",
     "@types/cli-table": "^0.3.1",
+    "@types/consola": "^2.2.5",
+    "@types/mkdirp": "^1.0.2",
     "@types/node": "^18.8.5",
+    "@typescript-eslint/eslint-plugin": "^5.40.0",
+    "@typescript-eslint/parser": "^5.40.0",
+    "eslint": "^8.25.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^27.1.2",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1",
     "typescript": "^4.8.4"
   }
 }

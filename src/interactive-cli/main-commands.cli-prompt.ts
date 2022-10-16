@@ -10,16 +10,27 @@ import { printSpacingBetweenPrompts } from './interactive-cli.helpers.js';
 // @ts-ignore
 const { Select } = enquirer;
 
+/* ================================ INTERFACE =============================== */
+interface IMainCommandsCliPromptInitFn {
+  verbose: boolean;
+  localLibrary: LocalLibrary;
+  remoteLibrary: RemoteLibrary;
+}
+
 /* ========================================================================== */
 /*                           CLI INTERACTIVE PROMPTS                          */
 /* ========================================================================== */
 export class MainCommandsCliPrompt {
-  verbose: boolean;
-  localLibrary: LocalLibrary;
-  remoteLibrary: RemoteLibrary;
+  verbose?: boolean;
+  localLibrary?: LocalLibrary;
+  remoteLibrary?: RemoteLibrary;
 
   /* ------------------------------------------------------------------------ */
-  init({ verbose = true, localLibrary, remoteLibrary }) {
+  init({
+    verbose = true,
+    localLibrary,
+    remoteLibrary,
+  }: IMainCommandsCliPromptInitFn) {
     this.verbose = verbose;
     this.localLibrary = localLibrary;
     this.remoteLibrary = remoteLibrary;
@@ -46,6 +57,8 @@ export class MainCommandsCliPrompt {
 
   /* ------------------------------------------------------------------------ */
   async getSelectLibraryPrompt() {
+    if (!this.localLibrary) return;
+
     const installedLibraries = await this.localLibrary.getInstalledLibraries();
 
     printSpacingBetweenPrompts();
@@ -62,7 +75,9 @@ export class MainCommandsCliPrompt {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectCollectionPrompt(selectedLibrary) {
+  async getSelectCollectionPrompt(selectedLibrary: string) {
+    if (!this.localLibrary) return;
+
     const selectedLibraryInstalledCollections =
       await this.localLibrary.getInstalledCollections(selectedLibrary);
 
@@ -80,10 +95,15 @@ export class MainCommandsCliPrompt {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectPackagePrompt(selectedLibrary, selectedCollection) {
+  async getSelectPackagePrompt(
+    selectedLibrary?: string,
+    selectedCollection?: string,
+  ) {
+    if (!this.localLibrary) return;
+
     const installedPackages = await this.localLibrary.getInstalledPackages(
       selectedLibrary,
-      selectedCollection
+      selectedCollection,
     );
 
     printSpacingBetweenPrompts();
@@ -97,9 +117,12 @@ export class MainCommandsCliPrompt {
 
   /* ------------------------------------------------------------------------ */
   getSelectUpdateTypePrompt() {
-    const choices = Object.keys(VERSION_UPDATE_TYPES).map(
-      (key) => VERSION_UPDATE_TYPES[key]
-    );
+    let versionUpdateValues = Object.values(VERSION_UPDATE_TYPES);
+    const choices: (VERSION_UPDATE_TYPES | string)[] = [
+      ...versionUpdateValues,
+      INTERACTIVE_CLI_COMMANDS.exit,
+    ];
+
     return new Select({
       name: 'select-update-type',
       message: 'Select update type:',

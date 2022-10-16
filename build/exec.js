@@ -3,7 +3,7 @@ import { LocalLibrary } from './local-library.js';
 import { RemoteLibrary } from './remote-library.js';
 import { InteractiveCli } from './interactive-cli/interactive-cli.js';
 import { PackageFileGenerator } from './package-file-generator.js';
-const remoteLibraryPath = `/Users/Nathaniel/Code/lib`;
+const remoteLibraryPath = `/Users/Nathaniel/Code/shared-lib`;
 const libDir = `/src/lib/`;
 (async () => {
     const packageFileGenerator = new PackageFileGenerator({
@@ -27,3 +27,4 @@ const libDir = `/src/lib/`;
     });
     interactiveCli.init();
 })();
+//# sourceMappingURL=exec.js.map

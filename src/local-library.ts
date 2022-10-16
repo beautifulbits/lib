@@ -15,6 +15,14 @@ import { RemoteLibrary } from './remote-library';
 import { TReaddirFileExtended } from './@types/readdir-file.js';
 import { TPackageMetadata } from './@types/package-metadata';
 import { TPackageConfig } from './@types/package-config.js';
+import { TPackagesCatalog } from './@types/packages-catalog.js';
+
+interface ILocalLibrary {
+  localLibraryDirectory: string;
+  verbose: boolean;
+  packageFileGenerator: PackageFileGenerator;
+  remoteLibrary: RemoteLibrary;
+}
 
 /* ========================================================================== */
 /*                                LOCAL LIBRARY                               */
@@ -25,8 +33,8 @@ export class LocalLibrary {
   libPath: string;
   packageFileGenerator: PackageFileGenerator;
   verbose: boolean;
-  libConfigFiles;
-  packagesCatalog;
+  libConfigFiles: TReaddirFileExtended[];
+  packagesCatalog: TPackagesCatalog;
   remoteLibrary: RemoteLibrary;
 
   /* ------------------------------------------------------------------------ */
@@ -35,13 +43,15 @@ export class LocalLibrary {
     verbose = false,
     packageFileGenerator,
     remoteLibrary,
-  }) {
+  }: ILocalLibrary) {
     this.verbose = verbose;
     this.packageFileGenerator = packageFileGenerator;
     this.cliWorkingDir = process.cwd();
     this.libDir = localLibraryDirectory;
     this.libPath = path.join(this.cliWorkingDir, this.libDir);
     this.remoteLibrary = remoteLibrary;
+    this.packagesCatalog = {};
+    this.libConfigFiles = [];
   }
 
   /* =========================== SCANNING LIBRARY =========================== */
@@ -102,7 +112,7 @@ export class LocalLibrary {
           'Duplicated package version found in local library.',
           path,
           configData,
-          installedVersion
+          installedVersion,
         );
       }
     });
@@ -117,18 +127,21 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledCollections(selectedLibrary) {
+  async getInstalledCollections(selectedLibrary: string) {
     await this.getInstalledPackagesCatalog();
     return Object.keys(this.packagesCatalog[selectedLibrary]);
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledPackages(selectedLibrary, selectedCollection) {
+  async getInstalledPackages(
+    selectedLibrary?: string,
+    selectedCollection?: string,
+  ) {
     await this.getInstalledPackagesCatalog();
     return getPackagesFromCatalog(
       this.packagesCatalog,
       selectedLibrary,
-      selectedCollection
+      selectedCollection,
     );
   }
 
@@ -136,14 +149,14 @@ export class LocalLibrary {
   async showInstalledPackagesAsTable(
     selectedLibrary?: string,
     selectedCollection?: string,
-    selectedPackage?: string
+    selectedPackage?: string,
   ) {
     await this.getInstalledPackagesCatalog();
     showPackagesAsTable(
       this.packagesCatalog,
       selectedLibrary,
       selectedCollection,
-      selectedPackage
+      selectedPackage,
     );
   }
 
@@ -151,7 +164,7 @@ export class LocalLibrary {
 
   /* ------------------------------------------------------------------------ */
   async findPackageMetadata(
-    selectedPackage: string
+    selectedPackage: string,
   ): Promise<TPackageMetadata | undefined> {
     let packageMetadata;
 
@@ -191,7 +204,7 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledPackageVersion(packageName) {
+  async getInstalledPackageVersion(packageName: string) {
     const packageMetadata = await this.findPackageMetadata(packageName);
 
     if (packageMetadata?.config?.version) {
@@ -221,7 +234,7 @@ export class LocalLibrary {
             extensions: true,
             readContent: true,
             encoding: `utf8`,
-          }
+          },
         );
 
         const packageFiles = files.map((file) => {
@@ -247,7 +260,10 @@ export class LocalLibrary {
   /* =========================== UPDATING PACKAGES ========================== */
 
   /* ------------------------------------------------------------------------ */
-  async updatePackageVersion(packageName: string, updateType?: string) {
+  async updatePackageVersion(
+    packageName: string,
+    updateType?: VERSION_UPDATE_TYPES,
+  ) {
     let newVersion;
 
     const currentVersion = await this.getInstalledPackageVersion(packageName);
@@ -256,7 +272,7 @@ export class LocalLibrary {
       newVersion = NEW_PACKAGE_INITIAL_VERSION;
     } else {
       const versionTuple = currentVersion.split(
-        VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR
+        VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR,
       );
 
       switch (updateType) {
@@ -273,14 +289,14 @@ export class LocalLibrary {
           const currentMinorVersion = Number(versionTuple[1]);
           const newMinorVersion = currentMinorVersion + 1;
           newVersion = [versionTuple[0], String(newMinorVersion), '0'].join(
-            `.`
+            `.`,
           );
           break;
         case VERSION_UPDATE_TYPES.major:
           const currentMajorVersion = Number(versionTuple[0]);
           const newMajorVersion = currentMajorVersion + 1;
           newVersion = [String(newMajorVersion), '0', '0'].join(
-            VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR
+            VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR,
           );
           break;
         case undefined:
@@ -288,7 +304,7 @@ export class LocalLibrary {
           break;
         default:
           consola.warn(
-            `Error determining new version for package ${packageName}: update type ${updateType} not supported.`
+            `Error determining new version for package ${packageName}: update type ${updateType} not supported.`,
           );
       }
     }
@@ -297,7 +313,7 @@ export class LocalLibrary {
       const remotePackageConfig =
         await this.remoteLibrary.findPublishedPackageMetadata(
           packageName,
-          newVersion
+          newVersion,
         );
 
       if (!remotePackageConfig) {
@@ -319,7 +335,7 @@ export class LocalLibrary {
         }
       } else {
         consola.warn(
-          `Version ${newVersion} of ${packageName} has already been published.`
+          `Version ${newVersion} of ${packageName} has already been published.`,
         );
         return false;
       }
@@ -330,10 +346,10 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async publishPackage(packageName: string, updateType?: string) {
+  async publishPackage(packageName: string, updateType?: VERSION_UPDATE_TYPES) {
     const isUpdateSuccess = await this.updatePackageVersion(
       packageName,
-      updateType
+      updateType,
     );
 
     if (isUpdateSuccess) {

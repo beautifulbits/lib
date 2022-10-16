@@ -15,3 +15,4 @@ export function getPackagesFromCatalog(packagesCatalog, selectedLibrary, selecte
     });
     return packages;
 }
+//# sourceMappingURL=get-packages-from-catalog.js.map

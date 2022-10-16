@@ -10,6 +10,15 @@ import {
 import { PackageFileGenerator } from './package-file-generator.js';
 import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 import { TPackageMetadata } from './@types/package-metadata.js';
+import { TPackagesCatalog } from './@types/packages-catalog.js';
+import { TReaddirFileExtended } from './@types/readdir-file.js';
+import { TReaddirFile } from './@types/readdir-file';
+
+interface IRemoteLibrary {
+  path: string;
+  verbose: boolean;
+  packageFileGenerator: PackageFileGenerator;
+}
 
 /* ========================================================================== */
 /*                               REMOTE LIBRARY                               */
@@ -18,14 +27,16 @@ export class RemoteLibrary {
   remoteLibraryPath: string;
   packageFileGenerator: PackageFileGenerator;
   verbose: boolean;
-  libConfigFiles;
-  packagesCatalog;
+  libConfigFiles: TReaddirFileExtended[];
+  packagesCatalog: TPackagesCatalog;
 
   /* ------------------------------------------------------------------------ */
-  constructor({ path, verbose = false, packageFileGenerator }) {
+  constructor({ path, verbose = false, packageFileGenerator }: IRemoteLibrary) {
     this.remoteLibraryPath = path;
     this.packageFileGenerator = packageFileGenerator;
     this.verbose = verbose;
+    this.packagesCatalog = {};
+    this.libConfigFiles = [];
   }
 
   /* =========================== SCANNING LIBRARY =========================== */
@@ -44,7 +55,7 @@ export class RemoteLibrary {
           readContent: true,
           include: [LIB_CONFIG_FILENAME],
           encoding: `utf8`,
-        }
+        },
       );
 
       if (this.verbose) {
@@ -61,7 +72,7 @@ export class RemoteLibrary {
     await this.findLibConfigFiles();
 
     this.packagesCatalog = {};
-
+    console.log('this.libConfigFiles', this.libConfigFiles);
     this.libConfigFiles.forEach((configFile) => {
       const configData = JSON.parse(configFile.data);
       const { library, collection, name, version } = configData;
@@ -87,7 +98,7 @@ export class RemoteLibrary {
         consola.warn(
           'Duplicated package version found in local library.',
           path,
-          configData
+          configData,
         );
       }
     });
@@ -102,18 +113,21 @@ export class RemoteLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledCollections(selectedLibrary) {
+  async getInstalledCollections(selectedLibrary: string) {
     await this.getPublishedPackagesCatalog();
     return Object.keys(this.packagesCatalog[selectedLibrary]);
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledPackages(selectedLibrary, selectedCollection) {
+  async getInstalledPackages(
+    selectedLibrary: string,
+    selectedCollection: string,
+  ) {
     await this.getPublishedPackagesCatalog();
     return getPackagesFromCatalog(
       this.packagesCatalog,
       selectedLibrary,
-      selectedCollection
+      selectedCollection,
     );
   }
 
@@ -121,7 +135,7 @@ export class RemoteLibrary {
   async showRemotePackagesAsTable(
     selectedLibrary?: string,
     selectedCollection?: string,
-    selectedPackage?: string
+    selectedPackage?: string,
   ) {
     await this.getPublishedPackagesCatalog();
 
@@ -129,7 +143,7 @@ export class RemoteLibrary {
       this.packagesCatalog,
       selectedLibrary,
       selectedCollection,
-      selectedPackage
+      selectedPackage,
     );
   }
 
@@ -138,7 +152,7 @@ export class RemoteLibrary {
   /* ------------------------------------------------------------------------ */
   async findPublishedPackageMetadata(
     selectedPackage?: string,
-    selectedVersion?: string
+    selectedVersion?: string,
   ): Promise<TPackageMetadata | TPackageMetadata[] | undefined> {
     let packageConfig: TPackageMetadata | undefined;
     let packagesConfig: TPackageMetadata[] = [];
@@ -175,7 +189,7 @@ export class RemoteLibrary {
     if (selectedVersion) {
       if (packageConfig === undefined && this.verbose) {
         consola.warn(
-          `Config for package ${selectedPackage}@${selectedVersion} not found.`
+          `Config for package ${selectedPackage}@${selectedVersion} not found.`,
         );
       }
       return packageConfig;
@@ -185,9 +199,9 @@ export class RemoteLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getRemotePackageLatestVersion(packageName, show = false) {
+  async getRemotePackageLatestVersion(packageName: string, show = false) {
     const packagesMetadata = await this.findPublishedPackageMetadata(
-      packageName
+      packageName,
     );
 
     let latestVersion = UNPUBLISHED_VERSION;
@@ -210,9 +224,9 @@ export class RemoteLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async grabPackageFilesAndMetadataForPublish(packageName) {
+  async grabPackageFilesAndMetadataForPublish(packageName: string) {
     const packageMetadata = await this.findPublishedPackageMetadata(
-      packageName
+      packageName,
     );
 
     if (packageMetadata !== undefined && !Array.isArray(packageMetadata)) {
@@ -225,12 +239,14 @@ export class RemoteLibrary {
           encoding: `utf8`,
         });
 
-        const packageFiles = files.map((file) => {
-          return {
-            ...file,
-            relativePath: file.path.replace(this.remoteLibraryPath, ''),
-          };
-        });
+        const packageFiles: TReaddirFileExtended[] = files.map(
+          (file: TReaddirFile) => {
+            return {
+              ...file,
+              relativePath: file.path.replace(this.remoteLibraryPath, ''),
+            };
+          },
+        );
 
         return {
           path,
@@ -247,10 +263,20 @@ export class RemoteLibrary {
   /* ========================== PUBLISHING PACKAGES ========================= */
 
   /* ------------------------------------------------------------------------ */
-  async publishPackage({ name, version, files, packageLocalRelativePath }) {
+  async publishPackage({
+    name,
+    version,
+    files,
+    packageLocalRelativePath,
+  }: {
+    name: string;
+    version: string;
+    files: TReaddirFileExtended[];
+    packageLocalRelativePath: string;
+  }) {
     const packageConfig = await this.findPublishedPackageMetadata(
       name,
-      version
+      version,
     );
 
     if (packageConfig) {
@@ -259,18 +285,18 @@ export class RemoteLibrary {
       files.forEach(async (file) => {
         const packageVersionBasePath = path.join(
           packageLocalRelativePath,
-          version
+          version,
         );
 
         const directoryRelativePathForVersion = path.join(
           packageVersionBasePath,
-          file.relativePath.replace(packageLocalRelativePath, '')
+          file.relativePath.replace(packageLocalRelativePath, ''),
         );
 
         const fileRelativePathForVersion = path.join(
           packageVersionBasePath,
           file.relativePath.replace(packageLocalRelativePath, ''),
-          file.name
+          file.name,
         );
 
         await this.packageFileGenerator.generateFile({

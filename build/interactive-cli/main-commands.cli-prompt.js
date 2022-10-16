@@ -8,7 +8,7 @@ const { Select } = enquirer;
 /* ========================================================================== */
 export class MainCommandsCliPrompt {
     /* ------------------------------------------------------------------------ */
-    init({ verbose = true, localLibrary, remoteLibrary }) {
+    init({ verbose = true, localLibrary, remoteLibrary, }) {
         this.verbose = verbose;
         this.localLibrary = localLibrary;
         this.remoteLibrary = remoteLibrary;
@@ -31,6 +31,8 @@ export class MainCommandsCliPrompt {
     }
     /* ------------------------------------------------------------------------ */
     async getSelectLibraryPrompt() {
+        if (!this.localLibrary)
+            return;
         const installedLibraries = await this.localLibrary.getInstalledLibraries();
         printSpacingBetweenPrompts();
         return new Select({
@@ -45,6 +47,8 @@ export class MainCommandsCliPrompt {
     }
     /* ------------------------------------------------------------------------ */
     async getSelectCollectionPrompt(selectedLibrary) {
+        if (!this.localLibrary)
+            return;
         const selectedLibraryInstalledCollections = await this.localLibrary.getInstalledCollections(selectedLibrary);
         printSpacingBetweenPrompts();
         return new Select({
@@ -59,6 +63,8 @@ export class MainCommandsCliPrompt {
     }
     /* ------------------------------------------------------------------------ */
     async getSelectPackagePrompt(selectedLibrary, selectedCollection) {
+        if (!this.localLibrary)
+            return;
         const installedPackages = await this.localLibrary.getInstalledPackages(selectedLibrary, selectedCollection);
         printSpacingBetweenPrompts();
         return new Select({
@@ -69,7 +75,11 @@ export class MainCommandsCliPrompt {
     }
     /* ------------------------------------------------------------------------ */
     getSelectUpdateTypePrompt() {
-        const choices = Object.keys(VERSION_UPDATE_TYPES).map((key) => VERSION_UPDATE_TYPES[key]);
+        let versionUpdateValues = Object.values(VERSION_UPDATE_TYPES);
+        const choices = [
+            ...versionUpdateValues,
+            INTERACTIVE_CLI_COMMANDS.exit,
+        ];
         return new Select({
             name: 'select-update-type',
             message: 'Select update type:',
@@ -77,3 +87,4 @@ export class MainCommandsCliPrompt {
         });
     }
 }
+//# sourceMappingURL=main-commands.cli-prompt.js.map

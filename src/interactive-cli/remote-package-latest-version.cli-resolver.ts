@@ -5,15 +5,23 @@ import { promptErrorHandler } from './interactive-cli.helpers.js';
 import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
 import { MainCommandsCliResolver } from './main-commands.cli-resolver.js';
 
-/* ========================================================================== */
-/*                 REMOTE PACKAGE LATEST VERSION CLI RESOLVER                 */
-/* ========================================================================== */
-export class RemotePackageLatestVersionCliResolver {
-  verbose: boolean;
+interface IRemotePackageLatestVersionCliResolverInitFn {
+  verbose?: boolean;
   localLibrary: LocalLibrary;
   remoteLibrary: RemoteLibrary;
   mainCommandsCliPrompt: MainCommandsCliPrompt;
   mainCommandsCliResolver: MainCommandsCliResolver;
+}
+
+/* ========================================================================== */
+/*                 REMOTE PACKAGE LATEST VERSION CLI RESOLVER                 */
+/* ========================================================================== */
+export class RemotePackageLatestVersionCliResolver {
+  verbose?: boolean;
+  localLibrary?: LocalLibrary;
+  remoteLibrary?: RemoteLibrary;
+  mainCommandsCliPrompt?: MainCommandsCliPrompt;
+  mainCommandsCliResolver?: MainCommandsCliResolver;
 
   /* ------------------------------------------------------------------------ */
   init({
@@ -22,7 +30,7 @@ export class RemotePackageLatestVersionCliResolver {
     remoteLibrary,
     mainCommandsCliPrompt,
     mainCommandsCliResolver,
-  }) {
+  }: IRemotePackageLatestVersionCliResolverInitFn) {
     this.verbose = verbose;
     this.localLibrary = localLibrary;
     this.remoteLibrary = remoteLibrary;
@@ -31,12 +39,16 @@ export class RemotePackageLatestVersionCliResolver {
   }
 
   async resolveSelectLibraryPrompt() {
+    if (!this.mainCommandsCliPrompt) return;
+
     const selectPrompt =
       await this.mainCommandsCliPrompt.getSelectLibraryPrompt();
 
     await selectPrompt
       .run()
-      .then(async (answer) => {
+      .then(async (answer: string) => {
+        if (!this.mainCommandsCliResolver) return;
+
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
             await this.resolveSelectPackagePrompt();
@@ -55,14 +67,18 @@ export class RemotePackageLatestVersionCliResolver {
 
   /* ------------------------------------------------------------------------ */
   async resolveSelectCollectionPrompt(selectedLibrary: string) {
+    if (!this.mainCommandsCliPrompt) return;
+
     const selectPrompt =
       await this.mainCommandsCliPrompt.getSelectCollectionPrompt(
-        selectedLibrary
+        selectedLibrary,
       );
 
     await selectPrompt
       .run()
-      .then(async (answer) => {
+      .then(async (answer: string) => {
+        if (!this.mainCommandsCliResolver) return;
+
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
             this.resolveSelectPackagePrompt(selectedLibrary);
@@ -83,17 +99,22 @@ export class RemotePackageLatestVersionCliResolver {
   /* ------------------------------------------------------------------------ */
   async resolveSelectPackagePrompt(
     selectedLibrary?: string,
-    selectedCollection?: string
+    selectedCollection?: string,
   ) {
+    if (!this.mainCommandsCliPrompt) return;
+
     const selectPrompt =
       await this.mainCommandsCliPrompt.getSelectPackagePrompt(
         selectedLibrary,
-        selectedCollection
+        selectedCollection,
       );
 
     await selectPrompt
       .run()
-      .then(async (answer) => {
+      .then(async (answer: string) => {
+        if (!this.mainCommandsCliResolver) return;
+        if (!this.remoteLibrary) return;
+
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.exit:
             this.mainCommandsCliResolver.resolveMainCommandsPrompt();
@@ -102,7 +123,7 @@ export class RemotePackageLatestVersionCliResolver {
           default:
             await this.remoteLibrary.getRemotePackageLatestVersion(
               answer,
-              true
+              true,
             );
             this.mainCommandsCliResolver.resolveMainCommandsPrompt();
         }

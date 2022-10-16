@@ -16,11 +16,13 @@ export const INTERACTIVE_CLI_COMMANDS = {
     exit: `Exit`,
     showAll: `Show all`,
 };
-export const VERSION_UPDATE_TYPES = {
-    patch: `patch`,
-    minor: `minor`,
-    major: `major`,
-};
+export var VERSION_UPDATE_TYPES;
+(function (VERSION_UPDATE_TYPES) {
+    VERSION_UPDATE_TYPES["patch"] = "patch";
+    VERSION_UPDATE_TYPES["minor"] = "minor";
+    VERSION_UPDATE_TYPES["major"] = "major";
+})(VERSION_UPDATE_TYPES || (VERSION_UPDATE_TYPES = {}));
 export const VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR = '.';
 export const NEW_PACKAGE_INITIAL_VERSION = `1.0.0`;
 export const UNPUBLISHED_VERSION = `unpublished`;
+//# sourceMappingURL=constants.js.map

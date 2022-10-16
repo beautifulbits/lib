@@ -16,6 +16,8 @@ export class LocalLibrary {
         this.libDir = localLibraryDirectory;
         this.libPath = path.join(this.cliWorkingDir, this.libDir);
         this.remoteLibrary = remoteLibrary;
+        this.packagesCatalog = {};
+        this.libConfigFiles = [];
     }
     /* =========================== SCANNING LIBRARY =========================== */
     /* ------------------------------------------------------------------------ */
@@ -246,3 +248,4 @@ export class LocalLibrary {
         }
     }
 }
+//# sourceMappingURL=local-library.js.map

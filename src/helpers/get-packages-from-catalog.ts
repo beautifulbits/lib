@@ -1,10 +1,9 @@
-import { TLocalPackageCatalog } from '../@types/local-package-catalog';
-import { TRemotePackageCatalog } from '../@types/remote-package-catalog';
+import { TPackagesCatalog } from '../@types/packages-catalog';
 
 export function getPackagesFromCatalog(
-  packagesCatalog: TLocalPackageCatalog | TRemotePackageCatalog,
+  packagesCatalog: TPackagesCatalog,
   selectedLibrary?: string,
-  selectedCollection?: string
+  selectedCollection?: string,
 ) {
   const packages: string[] = [];
   Object.keys(packagesCatalog).forEach((libraryName) => {

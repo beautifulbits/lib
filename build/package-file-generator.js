@@ -68,3 +68,4 @@ export class PackageFileGenerator {
         }
     }
 }
+//# sourceMappingURL=package-file-generator.js.map

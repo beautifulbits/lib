@@ -1,4 +1,4 @@
-import { INTERACTIVE_CLI_COMMANDS, } from '../helpers/constants.js';
+import { INTERACTIVE_CLI_COMMANDS } from '../helpers/constants.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
 /* ========================================================================== */
 /*                         MAIN COMMANDS CLI RESOLVER                         */
@@ -17,10 +17,22 @@ export class MainCommandsCliResolver {
     }
     /* ------------------------------------------------------------------------ */
     async resolveMainCommandsPrompt() {
+        if (!this.mainCommandsCliPrompt)
+            return;
         const selectPrompt = await this.mainCommandsCliPrompt.getMainCommandsPrompt();
         await selectPrompt
             .run()
             .then(async (answer) => {
+            if (!this.mainCommandsCliPrompt)
+                return;
+            if (!this.localPackagesListingCliResolver)
+                return;
+            if (!this.remoteLibrary)
+                return;
+            if (!this.packagePublishingCliResolver)
+                return;
+            if (!this.remotePackageLatestVersionCliResolver)
+                return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.listInstalledPackages:
                     this.localPackagesListingCliResolver.resolveSelectLibraryPrompt();
@@ -42,3 +54,4 @@ export class MainCommandsCliResolver {
             .catch(promptErrorHandler);
     }
 }
+//# sourceMappingURL=main-commands.cli-resolver.js.map

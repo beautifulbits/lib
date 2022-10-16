@@ -14,10 +14,16 @@ export class LocalPackagesListingCliResolver {
     }
     /* ------------------------------------------------------------------------ */
     async resolveSelectLibraryPrompt() {
+        if (!this.mainCommandsCliPrompt)
+            return;
         const selectPrompt = await this.mainCommandsCliPrompt.getSelectLibraryPrompt();
         await selectPrompt
             .run()
             .then(async (answer) => {
+            if (!this.localLibrary)
+                return;
+            if (!this.mainCommandsCliResolver)
+                return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.showAll:
                     await this.localLibrary.showInstalledPackagesAsTable();
@@ -34,10 +40,16 @@ export class LocalPackagesListingCliResolver {
     }
     /* ------------------------------------------------------------------------ */
     async resolveSelectCollectionPrompt(selectedLibrary) {
+        if (!this.mainCommandsCliPrompt)
+            return;
         const selectPrompt = await this.mainCommandsCliPrompt.getSelectCollectionPrompt(selectedLibrary);
         await selectPrompt
             .run()
             .then(async (answer) => {
+            if (!this.localLibrary)
+                return;
+            if (!this.mainCommandsCliResolver)
+                return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.showAll:
                     await this.localLibrary.showInstalledPackagesAsTable(selectedLibrary);
@@ -54,3 +66,4 @@ export class LocalPackagesListingCliResolver {
             .catch(promptErrorHandler);
     }
 }
+//# sourceMappingURL=local-packages-listing.cli-resolver.js.map

@@ -1,4 +1,4 @@
-import { INTERACTIVE_CLI_COMMANDS } from '../constants.js';
+import { INTERACTIVE_CLI_COMMANDS } from '../helpers/constants.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
 /* ========================================================================== */
 /*                 REMOTE PACKAGE LATEST VERSION CLI RESOLVER                 */

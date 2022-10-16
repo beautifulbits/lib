@@ -2,9 +2,9 @@ import recursiveReaddir from 'recursive-readdir-async';
 import consola from 'consola';
 import path from 'path';
 import boxen from 'boxen';
-import { showPackagesAsTable } from './show-packages-as-table.js';
-import { LIB_CONFIG_FILENAME, UNPUBLISHED_VERSION } from './constants.js';
-import { getPackagesFromCatalog } from './get-packages-from-catalog.js';
+import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
+import { LIB_CONFIG_FILENAME, UNPUBLISHED_VERSION, } from './helpers/constants.js';
+import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 /* ========================================================================== */
 /*                               REMOTE LIBRARY                               */
 /* ========================================================================== */

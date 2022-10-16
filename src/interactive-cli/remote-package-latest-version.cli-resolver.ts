@@ -1,4 +1,4 @@
-import { INTERACTIVE_CLI_COMMANDS } from '../constants.js';
+import { INTERACTIVE_CLI_COMMANDS } from '../helpers/constants.js';
 import { LocalLibrary } from '../local-library.js';
 import { RemoteLibrary } from '../remote-library.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';

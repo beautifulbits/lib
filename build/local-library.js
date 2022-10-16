@@ -1,9 +1,9 @@
 import recursiveReaddir from 'recursive-readdir-async';
 import consola from 'consola';
 import path from 'path';
-import { LIB_CONFIG_FILENAME, NEW_PACKAGE_INITIAL_VERSION, UNPUBLISHED_VERSION, VERSION_UPDATE_TYPES, VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR, } from './constants.js';
-import { showPackagesAsTable } from './show-packages-as-table.js';
-import { getPackagesFromCatalog } from './get-packages-from-catalog.js';
+import { LIB_CONFIG_FILENAME, NEW_PACKAGE_INITIAL_VERSION, UNPUBLISHED_VERSION, VERSION_UPDATE_TYPES, VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR, } from './helpers/constants.js';
+import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
+import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 /* ========================================================================== */
 /*                                LOCAL LIBRARY                               */
 /* ========================================================================== */

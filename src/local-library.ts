@@ -7,9 +7,9 @@ import {
   UNPUBLISHED_VERSION,
   VERSION_UPDATE_TYPES,
   VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR,
-} from './constants.js';
-import { showPackagesAsTable } from './show-packages-as-table.js';
-import { getPackagesFromCatalog } from './get-packages-from-catalog.js';
+} from './helpers/constants.js';
+import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
+import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 import { PackageFileGenerator } from './package-file-generator.js';
 import { RemoteLibrary } from './remote-library';
 import { TReaddirFileExtended } from './@types/readdir-file.js';

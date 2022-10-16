@@ -4,7 +4,7 @@ import path from 'path';
 import boxen from 'boxen';
 import mkdirp from 'mkdirp';
 import consola from 'consola';
-import { LIB_CONFIG_FILENAME, NEW_PACKAGE_INITIAL_VERSION, } from './constants.js';
+import { LIB_CONFIG_FILENAME, NEW_PACKAGE_INITIAL_VERSION, } from './helpers/constants.js';
 /* ========================================================================== */
 /*                        PACKAGE CONFIG FILE GENERATOR                       */
 /* ========================================================================== */

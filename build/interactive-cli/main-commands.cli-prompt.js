@@ -1,5 +1,5 @@
 import enquirer from 'enquirer';
-import { INTERACTIVE_CLI_COMMANDS, VERSION_UPDATE_TYPES, } from '../constants.js';
+import { INTERACTIVE_CLI_COMMANDS, VERSION_UPDATE_TYPES, } from '../helpers/constants.js';
 import { printSpacingBetweenPrompts } from './interactive-cli.helpers.js';
 // @ts-ignore
 const { Select } = enquirer;

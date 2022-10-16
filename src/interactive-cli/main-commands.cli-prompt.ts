@@ -2,7 +2,7 @@ import enquirer from 'enquirer';
 import {
   INTERACTIVE_CLI_COMMANDS,
   VERSION_UPDATE_TYPES,
-} from '../constants.js';
+} from '../helpers/constants.js';
 import { LocalLibrary } from '../local-library.js';
 import { RemoteLibrary } from '../remote-library.js';
 import { printSpacingBetweenPrompts } from './interactive-cli.helpers.js';

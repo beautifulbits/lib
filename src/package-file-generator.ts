@@ -7,7 +7,7 @@ import consola from 'consola';
 import {
   LIB_CONFIG_FILENAME,
   NEW_PACKAGE_INITIAL_VERSION,
-} from './constants.js';
+} from './helpers/constants.js';
 
 /* ========================================================================== */
 /*                        PACKAGE CONFIG FILE GENERATOR                       */

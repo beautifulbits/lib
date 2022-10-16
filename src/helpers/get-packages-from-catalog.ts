@@ -1,5 +1,5 @@
-import { TLocalPackageCatalog } from './@types/local-package-catalog';
-import { TRemotePackageCatalog } from './@types/remote-package-catalog';
+import { TLocalPackageCatalog } from '../@types/local-package-catalog';
+import { TRemotePackageCatalog } from '../@types/remote-package-catalog';
 
 export function getPackagesFromCatalog(
   packagesCatalog: TLocalPackageCatalog | TRemotePackageCatalog,

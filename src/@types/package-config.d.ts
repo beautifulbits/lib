@@ -3,4 +3,5 @@ export type TPackageConfig = {
   library: string;
   collection: string;
   version: string;
+  path: string;
 };

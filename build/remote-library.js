@@ -10,17 +10,23 @@ import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 /* ========================================================================== */
 export class RemoteLibrary {
     /* ------------------------------------------------------------------------ */
-    constructor({ path, verbose = false, packageFileGenerator }) {
-        this.remoteLibraryPath = path;
-        this.packageFileGenerator = packageFileGenerator;
-        this.verbose = verbose;
+    constructor() {
         this.packagesCatalog = {};
         this.libConfigFiles = [];
+    }
+    /* ------------------------------------------------------------------------ */
+    init({ path, verbose = false, packageFileGenerator, localLibrary, }) {
+        this.localLibrary = localLibrary;
+        this.packageFileGenerator = packageFileGenerator;
+        this.remoteLibraryPath = path;
+        this.verbose = verbose;
     }
     /* =========================== SCANNING LIBRARY =========================== */
     /* ------------------------------------------------------------------------ */
     async findLibConfigFiles() {
         try {
+            if (!this.remoteLibraryPath)
+                return;
             if (this.verbose) {
                 consola.log(`Scanning ${this.remoteLibraryPath} for modules.`);
             }
@@ -69,17 +75,17 @@ export class RemoteLibrary {
     }
     /* =========================== LISTING PACKAGES =========================== */
     /* ------------------------------------------------------------------------ */
-    async getInstalledLibraries() {
+    async getRemoteLibraries() {
         await this.getPublishedPackagesCatalog();
         return Object.keys(this.packagesCatalog);
     }
     /* ------------------------------------------------------------------------ */
-    async getInstalledCollections(selectedLibrary) {
+    async getRemoteCollections(selectedLibrary) {
         await this.getPublishedPackagesCatalog();
         return Object.keys(this.packagesCatalog[selectedLibrary]);
     }
     /* ------------------------------------------------------------------------ */
-    async getInstalledPackages(selectedLibrary, selectedCollection) {
+    async getRemotePackages(selectedLibrary, selectedCollection) {
         await this.getPublishedPackagesCatalog();
         return getPackagesFromCatalog(this.packagesCatalog, selectedLibrary, selectedCollection);
     }
@@ -118,7 +124,7 @@ export class RemoteLibrary {
         });
         if (selectedVersion) {
             if (packageConfig === undefined && this.verbose) {
-                consola.warn(`Config for package ${selectedPackage}@${selectedVersion} not found.`);
+                consola.warn(`Config for remote package ${selectedPackage}@${selectedVersion} not found.`);
             }
             return packageConfig;
         }
@@ -150,33 +156,50 @@ export class RemoteLibrary {
         return latestVersion;
     }
     /* ------------------------------------------------------------------------ */
-    async grabPackageFilesAndMetadataForPublish(packageName) {
-        const packageMetadata = await this.findPublishedPackageMetadata(packageName);
-        if (packageMetadata !== undefined && !Array.isArray(packageMetadata)) {
-            const { path, config } = packageMetadata;
-            try {
-                const files = await recursiveReaddir.list(path, {
-                    ignoreFolders: true,
-                    extensions: true,
-                    readContent: true,
-                    encoding: `utf8`,
-                });
-                const packageFiles = files.map((file) => {
+    async grabPackageFilesAndMetadataInRemoteLibrary(packageName, selectedVersion) {
+        const packagesMetadata = await this.findPublishedPackageMetadata(packageName);
+        if (packagesMetadata !== undefined && Array.isArray(packagesMetadata)) {
+            const packageMetadata = packagesMetadata.find((test) => test.config.version === selectedVersion);
+            if (packageMetadata) {
+                const { path, config } = packageMetadata;
+                try {
+                    const files = await recursiveReaddir.list(path, {
+                        ignoreFolders: true,
+                        extensions: true,
+                        readContent: true,
+                        encoding: `utf8`,
+                    });
+                    const remoteLibraryPath = this.remoteLibraryPath
+                        ? this.remoteLibraryPath
+                        : '';
+                    if (!this.remoteLibraryPath) {
+                        consola.warn(`RemoteLibrary.remoteLibraryPath is not defined.`);
+                    }
+                    const packageFiles = files.map((file) => {
+                        if (!this.remoteLibraryPath)
+                            return;
+                        return {
+                            ...file,
+                            relativePath: file.path.replace(remoteLibraryPath, ''),
+                        };
+                    });
                     return {
-                        ...file,
-                        relativePath: file.path.replace(this.remoteLibraryPath, ''),
+                        path,
+                        config,
+                        packageFiles,
                     };
-                });
-                return {
-                    path,
-                    config,
-                    packageFiles,
-                };
+                }
+                catch (recursiveReaddirError) {
+                    consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+                    process.exit(1);
+                }
             }
-            catch (recursiveReaddirError) {
-                consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
-                process.exit(1);
+            else {
+                consola.error(`Unable to find metadata in remote library for ${packageName}@${selectedVersion}`);
             }
+        }
+        else {
+            consola.error(`Unable to find metadata in remote library  for ${packageName}`);
         }
     }
     /* ========================== PUBLISHING PACKAGES ========================= */
@@ -191,6 +214,10 @@ export class RemoteLibrary {
                 const packageVersionBasePath = path.join(library, collection, name, version);
                 const directoryRelativePathForVersion = path.join(packageVersionBasePath, file.relativePath.replace(packageLocalRelativePath, ''));
                 const fileRelativePathForVersion = path.join(packageVersionBasePath, file.relativePath.replace(packageLocalRelativePath, ''), file.name);
+                if (!this.packageFileGenerator)
+                    return;
+                if (!this.remoteLibraryPath)
+                    return;
                 await this.packageFileGenerator.generateFile({
                     basePath: this.remoteLibraryPath,
                     directoryRelativePath: directoryRelativePathForVersion,
@@ -199,6 +226,23 @@ export class RemoteLibrary {
                 });
             });
             consola.log(`Package ${name}@${version} successfully published!`);
+        }
+    }
+    /* ========================== INSTALLING PACKAGES ========================= */
+    /* ------------------------------------------------------------------------ */
+    async installPackage({ packageName, version, }) {
+        if (!this.localLibrary)
+            return;
+        const filesAndMetadata = await this.grabPackageFilesAndMetadataInRemoteLibrary(packageName, version);
+        if (filesAndMetadata) {
+            const { packageFiles, path: packageRemotePath, config, } = filesAndMetadata;
+            await this.localLibrary.installPackage({
+                packageFiles,
+                packageName,
+                packageRemotePath,
+                packageLocalPath: config.path,
+                version,
+            });
         }
     }
 }

@@ -50,16 +50,19 @@ export class MainCommandsCliPrompt {
         INTERACTIVE_CLI_COMMANDS.listRemotePackages,
         INTERACTIVE_CLI_COMMANDS.getRemotePackageLatestVersion,
         INTERACTIVE_CLI_COMMANDS.publishPackage,
+        INTERACTIVE_CLI_COMMANDS.installPackage,
         INTERACTIVE_CLI_COMMANDS.exit,
       ],
     });
   }
 
+  /* ============================= LOCAL LIBRARY ============================ */
+
   /* ------------------------------------------------------------------------ */
-  async getSelectLibraryPrompt() {
+  async getSelectLocalLibraryPrompt() {
     if (!this.localLibrary) return;
 
-    const installedLibraries = await this.localLibrary.getInstalledLibraries();
+    const libraries = await this.localLibrary.getInstalledLibraries();
 
     printSpacingBetweenPrompts();
 
@@ -68,18 +71,19 @@ export class MainCommandsCliPrompt {
       message: 'Select library:',
       choices: [
         INTERACTIVE_CLI_COMMANDS.showAll,
-        ...installedLibraries,
+        ...libraries,
         INTERACTIVE_CLI_COMMANDS.exit,
       ],
     });
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectCollectionPrompt(selectedLibrary: string) {
+  async getSelectLocalCollectionPrompt(selectedLibrary: string) {
     if (!this.localLibrary) return;
 
-    const selectedLibraryInstalledCollections =
-      await this.localLibrary.getInstalledCollections(selectedLibrary);
+    const collections = await this.localLibrary.getInstalledCollections(
+      selectedLibrary,
+    );
 
     printSpacingBetweenPrompts();
 
@@ -88,20 +92,20 @@ export class MainCommandsCliPrompt {
       message: 'Select collection:',
       choices: [
         INTERACTIVE_CLI_COMMANDS.showAll,
-        ...selectedLibraryInstalledCollections,
+        ...collections,
         INTERACTIVE_CLI_COMMANDS.exit,
       ],
     });
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectPackagePrompt(
+  async getSelectLocalPackagePrompt(
     selectedLibrary?: string,
     selectedCollection?: string,
   ) {
     if (!this.localLibrary) return;
 
-    const installedPackages = await this.localLibrary.getInstalledPackages(
+    const packages = await this.localLibrary.getInstalledPackages(
       selectedLibrary,
       selectedCollection,
     );
@@ -111,9 +115,74 @@ export class MainCommandsCliPrompt {
     return new Select({
       name: 'select-package',
       message: 'Select package:',
-      choices: [...installedPackages, INTERACTIVE_CLI_COMMANDS.exit],
+      choices: [...packages, INTERACTIVE_CLI_COMMANDS.exit],
     });
   }
+
+  /* ============================ REMOTE LIBRARY ============================ */
+
+  /* ------------------------------------------------------------------------ */
+  async getSelectRemoteLibraryPrompt() {
+    if (!this.remoteLibrary) return;
+
+    const libraries = await this.remoteLibrary.getRemoteLibraries();
+
+    printSpacingBetweenPrompts();
+
+    return new Select({
+      name: 'select-library',
+      message: 'Select library:',
+      choices: [
+        INTERACTIVE_CLI_COMMANDS.showAll,
+        ...libraries,
+        INTERACTIVE_CLI_COMMANDS.exit,
+      ],
+    });
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async getSelectRemoteCollectionPrompt(selectedLibrary: string) {
+    if (!this.remoteLibrary) return;
+
+    const collections = await this.remoteLibrary.getRemoteCollections(
+      selectedLibrary,
+    );
+
+    printSpacingBetweenPrompts();
+
+    return new Select({
+      name: 'select-collection',
+      message: 'Select collection:',
+      choices: [
+        INTERACTIVE_CLI_COMMANDS.showAll,
+        ...collections,
+        INTERACTIVE_CLI_COMMANDS.exit,
+      ],
+    });
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async getSelectRemotePackagePrompt(
+    selectedLibrary?: string,
+    selectedCollection?: string,
+  ) {
+    if (!this.remoteLibrary) return;
+
+    const packages = await this.remoteLibrary.getRemotePackages(
+      selectedLibrary,
+      selectedCollection,
+    );
+
+    printSpacingBetweenPrompts();
+
+    return new Select({
+      name: 'select-package',
+      message: 'Select package:',
+      choices: [...packages, INTERACTIVE_CLI_COMMANDS.exit],
+    });
+  }
+
+  /* ============================== VERSIONING ============================== */
 
   /* ------------------------------------------------------------------------ */
   getSelectUpdateTypePrompt() {

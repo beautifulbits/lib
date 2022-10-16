@@ -1,21 +1,22 @@
 export const LIB_CONFIG_FILENAME = `lib.cfg`;
 
 export const INTERACTIVE_CLI_COMMANDS = {
+  compareInstalledPackageWithRemote: `Compare installed package with remote`,
+  detectPackageDependencies: `Detect package dependencies`,
+  exit: `Exit`,
+  getInstalledPackageVersion: `Get installed package version`,
+  getRemotePackageLatestVersion: `Get package latest published version`,
+  initLib: `Init LIB`,
+  initPackageDirectory: `Init package (directory)`,
+  initPackageSingleFile: `Init package (single file)`,
+  installPackageDependencies: `Install package dependencies`,
   listInstalledPackages: `List installed packages`,
   listRemotePackages: `List remote packages`,
   listRemotePackageVersions: `List remote package versions`,
-  getInstalledPackageVersion: `Get installed package version`,
-  getRemotePackageLatestVersion: `Get package latest published version`,
-  initPackageDirectory: `Init package (directory)`,
-  initPackageSingleFile: `Init package (single file)`,
   publishPackage: `Publish package`,
-  updateInstalledPackage: 'Update installed package',
-  compareInstalledPackageWithRemote: `Compare installed package with remote`,
-  detectPackageDependencies: `Detect package dependencies`,
-  installPackageDependencies: `Install package dependencies`,
-  initLib: `Init LIB`,
-  exit: `Exit`,
+  installPackage: `Install package`,
   showAll: `Show all`,
+  updateInstalledPackage: 'Update installed package',
 };
 
 export enum VERSION_UPDATE_TYPES {

@@ -13,30 +13,45 @@ import { TPackageMetadata } from './@types/package-metadata.js';
 import { TPackagesCatalog } from './@types/packages-catalog.js';
 import { TReaddirFileExtended } from './@types/readdir-file.js';
 import { TReaddirFile } from './@types/readdir-file';
+import { TPackageConfig } from './@types/package-config';
+import { LocalLibrary } from './local-library';
 
-interface IRemoteLibrary {
+/* ================================ INTERFACE =============================== */
+interface IRemoteLibraryInitFn {
+  localLibrary: LocalLibrary;
+  packageFileGenerator: PackageFileGenerator;
   path: string;
   verbose: boolean;
-  packageFileGenerator: PackageFileGenerator;
 }
 
 /* ========================================================================== */
 /*                               REMOTE LIBRARY                               */
 /* ========================================================================== */
 export class RemoteLibrary {
-  remoteLibraryPath: string;
-  packageFileGenerator: PackageFileGenerator;
-  verbose: boolean;
   libConfigFiles: TReaddirFileExtended[];
+  localLibrary?: LocalLibrary;
+  packageFileGenerator?: PackageFileGenerator;
   packagesCatalog: TPackagesCatalog;
+  remoteLibraryPath?: string;
+  verbose?: boolean;
 
   /* ------------------------------------------------------------------------ */
-  constructor({ path, verbose = false, packageFileGenerator }: IRemoteLibrary) {
-    this.remoteLibraryPath = path;
-    this.packageFileGenerator = packageFileGenerator;
-    this.verbose = verbose;
+  constructor() {
     this.packagesCatalog = {};
     this.libConfigFiles = [];
+  }
+
+  /* ------------------------------------------------------------------------ */
+  init({
+    path,
+    verbose = false,
+    packageFileGenerator,
+    localLibrary,
+  }: IRemoteLibraryInitFn) {
+    this.localLibrary = localLibrary;
+    this.packageFileGenerator = packageFileGenerator;
+    this.remoteLibraryPath = path;
+    this.verbose = verbose;
   }
 
   /* =========================== SCANNING LIBRARY =========================== */
@@ -44,9 +59,12 @@ export class RemoteLibrary {
   /* ------------------------------------------------------------------------ */
   async findLibConfigFiles() {
     try {
+      if (!this.remoteLibraryPath) return;
+
       if (this.verbose) {
         consola.log(`Scanning ${this.remoteLibraryPath} for modules.`);
       }
+
       this.libConfigFiles = await recursiveReaddir.list(
         this.remoteLibraryPath,
         {
@@ -107,21 +125,21 @@ export class RemoteLibrary {
   /* =========================== LISTING PACKAGES =========================== */
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledLibraries() {
+  async getRemoteLibraries() {
     await this.getPublishedPackagesCatalog();
     return Object.keys(this.packagesCatalog);
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledCollections(selectedLibrary: string) {
+  async getRemoteCollections(selectedLibrary: string) {
     await this.getPublishedPackagesCatalog();
     return Object.keys(this.packagesCatalog[selectedLibrary]);
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledPackages(
-    selectedLibrary: string,
-    selectedCollection: string,
+  async getRemotePackages(
+    selectedLibrary?: string,
+    selectedCollection?: string,
   ) {
     await this.getPublishedPackagesCatalog();
     return getPackagesFromCatalog(
@@ -189,7 +207,7 @@ export class RemoteLibrary {
     if (selectedVersion) {
       if (packageConfig === undefined && this.verbose) {
         consola.warn(
-          `Config for package ${selectedPackage}@${selectedVersion} not found.`,
+          `Config for remote package ${selectedPackage}@${selectedVersion} not found.`,
         );
       }
       return packageConfig;
@@ -228,39 +246,68 @@ export class RemoteLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async grabPackageFilesAndMetadataForPublish(packageName: string) {
-    const packageMetadata = await this.findPublishedPackageMetadata(
+  async grabPackageFilesAndMetadataInRemoteLibrary(
+    packageName: string,
+    selectedVersion: string,
+  ): Promise<{
+    path: string;
+    config: TPackageConfig;
+    packageFiles: TReaddirFileExtended[];
+  } | void> {
+    const packagesMetadata = await this.findPublishedPackageMetadata(
       packageName,
     );
 
-    if (packageMetadata !== undefined && !Array.isArray(packageMetadata)) {
-      const { path, config } = packageMetadata;
-      try {
-        const files = await recursiveReaddir.list(path, {
-          ignoreFolders: true,
-          extensions: true,
-          readContent: true,
-          encoding: `utf8`,
-        });
+    if (packagesMetadata !== undefined && Array.isArray(packagesMetadata)) {
+      const packageMetadata = packagesMetadata.find(
+        (test) => test.config.version === selectedVersion,
+      );
 
-        const packageFiles: TReaddirFileExtended[] = files.map(
-          (file: TReaddirFile) => {
-            return {
-              ...file,
-              relativePath: file.path.replace(this.remoteLibraryPath, ''),
-            };
-          },
+      if (packageMetadata) {
+        const { path, config } = packageMetadata;
+        try {
+          const files = await recursiveReaddir.list(path, {
+            ignoreFolders: true,
+            extensions: true,
+            readContent: true,
+            encoding: `utf8`,
+          });
+
+          const remoteLibraryPath = this.remoteLibraryPath
+            ? this.remoteLibraryPath
+            : '';
+          if (!this.remoteLibraryPath) {
+            consola.warn(`RemoteLibrary.remoteLibraryPath is not defined.`);
+          }
+
+          const packageFiles: TReaddirFileExtended[] = files.map(
+            (file: TReaddirFile) => {
+              if (!this.remoteLibraryPath) return;
+              return {
+                ...file,
+                relativePath: file.path.replace(remoteLibraryPath, ''),
+              };
+            },
+          );
+
+          return {
+            path,
+            config,
+            packageFiles,
+          };
+        } catch (recursiveReaddirError) {
+          consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+          process.exit(1);
+        }
+      } else {
+        consola.error(
+          `Unable to find metadata in remote library for ${packageName}@${selectedVersion}`,
         );
-
-        return {
-          path,
-          config,
-          packageFiles,
-        };
-      } catch (recursiveReaddirError) {
-        consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
-        process.exit(1);
       }
+    } else {
+      consola.error(
+        `Unable to find metadata in remote library  for ${packageName}`,
+      );
     }
   }
 
@@ -309,6 +356,9 @@ export class RemoteLibrary {
           file.name,
         );
 
+        if (!this.packageFileGenerator) return;
+        if (!this.remoteLibraryPath) return;
+
         await this.packageFileGenerator.generateFile({
           basePath: this.remoteLibraryPath,
           directoryRelativePath: directoryRelativePathForVersion,
@@ -317,6 +367,40 @@ export class RemoteLibrary {
         });
       });
       consola.log(`Package ${name}@${version} successfully published!`);
+    }
+  }
+
+  /* ========================== INSTALLING PACKAGES ========================= */
+
+  /* ------------------------------------------------------------------------ */
+  async installPackage({
+    packageName,
+    version,
+  }: {
+    packageName: string;
+    version: string;
+  }) {
+    if (!this.localLibrary) return;
+
+    const filesAndMetadata =
+      await this.grabPackageFilesAndMetadataInRemoteLibrary(
+        packageName,
+        version,
+      );
+
+    if (filesAndMetadata) {
+      const {
+        packageFiles,
+        path: packageRemotePath,
+        config,
+      } = filesAndMetadata;
+      await this.localLibrary.installPackage({
+        packageFiles,
+        packageName,
+        packageRemotePath,
+        packageLocalPath: config.path,
+        version,
+      });
     }
   }
 }

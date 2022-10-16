@@ -44,7 +44,7 @@ export class LocalPackagesListingCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLibraryPrompt();
+      await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
 
     await selectPrompt
       .run()
@@ -74,7 +74,7 @@ export class LocalPackagesListingCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectCollectionPrompt(
+      await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(
         selectedLibrary,
       );
 

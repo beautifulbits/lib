@@ -16,7 +16,7 @@ export class PackagePublishingCliResolver {
     async resolveSelectLibraryPrompt() {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLibraryPrompt();
+        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -39,7 +39,7 @@ export class PackagePublishingCliResolver {
     async resolveSelectCollectionPrompt(selectedLibrary) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectCollectionPrompt(selectedLibrary);
+        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(selectedLibrary);
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -62,7 +62,7 @@ export class PackagePublishingCliResolver {
     async resolveSelectPackagePrompt(selectedLibrary, selectedCollection) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectPackagePrompt(selectedLibrary, selectedCollection);
+        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalPackagePrompt(selectedLibrary, selectedCollection);
         await selectPrompt
             .run()
             .then(async (answer) => {

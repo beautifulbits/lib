@@ -5,6 +5,7 @@ import { PackagePublishingCliResolver } from './package-publishing.cli-resolver.
 import { RemotePackageLatestVersionCliResolver } from './remote-package-latest-version.cli-resolver.js';
 import { LocalLibrary } from '../local-library';
 import { RemoteLibrary } from '../remote-library';
+import { InstallPackageCliResolver } from './install-package.cli-resolver.js';
 
 interface IInteractiveCli {
   verbose: boolean;
@@ -31,6 +32,7 @@ export class InteractiveCli {
     const packagePublishingCliResolver = new PackagePublishingCliResolver();
     const remotePackageLatestVersionCliResolver =
       new RemotePackageLatestVersionCliResolver();
+    const installPackageCliResolver = new InstallPackageCliResolver();
 
     mainCommandsCliPrompt.init({
       verbose,
@@ -46,6 +48,7 @@ export class InteractiveCli {
       localPackagesListingCliResolver,
       packagePublishingCliResolver,
       remotePackageLatestVersionCliResolver,
+      installPackageCliResolver,
     });
 
     localPackagesListingCliResolver.init({
@@ -57,6 +60,14 @@ export class InteractiveCli {
     });
 
     packagePublishingCliResolver.init({
+      verbose,
+      localLibrary,
+      remoteLibrary,
+      mainCommandsCliPrompt,
+      mainCommandsCliResolver,
+    });
+
+    installPackageCliResolver.init({
       verbose,
       localLibrary,
       remoteLibrary,

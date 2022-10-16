@@ -17,7 +17,8 @@ import { TPackageMetadata } from './@types/package-metadata';
 import { TPackageConfig } from './@types/package-config.js';
 import { TPackagesCatalog } from './@types/packages-catalog.js';
 
-interface ILocalLibrary {
+/* ================================ INTERFACE =============================== */
+interface ILocalLibraryInitFn {
   localLibraryDirectory: string;
   verbose: boolean;
   packageFileGenerator: PackageFileGenerator;
@@ -29,39 +30,46 @@ interface ILocalLibrary {
 /* ========================================================================== */
 export class LocalLibrary {
   cliWorkingDir: string;
-  libDir: string;
-  libPath: string;
-  packageFileGenerator: PackageFileGenerator;
-  verbose: boolean;
   libConfigFiles: TReaddirFileExtended[];
+  libDir?: string;
+  libPath?: string;
+  packageFileGenerator?: PackageFileGenerator;
   packagesCatalog: TPackagesCatalog;
-  remoteLibrary: RemoteLibrary;
+  remoteLibrary?: RemoteLibrary;
+  verbose?: boolean;
 
   /* ------------------------------------------------------------------------ */
-  constructor({
+  constructor() {
+    this.packagesCatalog = {};
+    this.libConfigFiles = [];
+    this.cliWorkingDir = process.cwd();
+  }
+
+  /* ------------------------------------------------------------------------ */
+  init({
     localLibraryDirectory,
     verbose = false,
     packageFileGenerator,
     remoteLibrary,
-  }: ILocalLibrary) {
-    this.verbose = verbose;
-    this.packageFileGenerator = packageFileGenerator;
-    this.cliWorkingDir = process.cwd();
+  }: ILocalLibraryInitFn) {
     this.libDir = localLibraryDirectory;
     this.libPath = path.join(this.cliWorkingDir, this.libDir);
+    this.packageFileGenerator = packageFileGenerator;
     this.remoteLibrary = remoteLibrary;
-    this.packagesCatalog = {};
-    this.libConfigFiles = [];
+    this.verbose = verbose;
   }
 
   /* =========================== SCANNING LIBRARY =========================== */
 
   /* ------------------------------------------------------------------------ */
   async findLibConfigFiles() {
+    if (!this.libPath) return;
+
     try {
       if (this.verbose) {
         consola.log(`Scanning ${this.libPath} for modules.`);
       }
+
       this.libConfigFiles = await recursiveReaddir.list(this.libPath, {
         ignoreFolders: true,
         extensions: true,
@@ -197,7 +205,7 @@ export class LocalLibrary {
     });
 
     if (!packageMetadata) {
-      consola.warn(`Config for package ${selectedPackage} not found.`);
+      consola.warn(`Config for local package ${selectedPackage} not found.`);
     }
 
     return packageMetadata;
@@ -309,6 +317,9 @@ export class LocalLibrary {
       }
     }
 
+    if (!this.remoteLibrary) return;
+    if (!this.packageFileGenerator) return;
+
     if (newVersion) {
       const remotePackageConfig =
         await this.remoteLibrary.findPublishedPackageMetadata(
@@ -348,6 +359,8 @@ export class LocalLibrary {
 
   /* ------------------------------------------------------------------------ */
   async publishPackage(packageName: string, updateType?: VERSION_UPDATE_TYPES) {
+    if (!this.remoteLibrary) return;
+
     const isUpdateSuccess = await this.updatePackageVersion(
       packageName,
       updateType,
@@ -372,6 +385,52 @@ export class LocalLibrary {
           library: config.library,
         });
       }
+    }
+  }
+
+  /* ========================== INSTALLING PACKAGES ========================= */
+
+  /* ------------------------------------------------------------------------ */
+  async installPackage({
+    packageFiles,
+    packageName,
+    packageRemotePath,
+    packageLocalPath,
+    version,
+  }: {
+    packageFiles: TReaddirFileExtended[];
+    packageName: string;
+    packageRemotePath: string;
+    packageLocalPath: string;
+    version: string;
+  }) {
+    const packageMetadata = await this.findPackageMetadata(packageName);
+
+    if (packageMetadata?.config.version === version) {
+      consola.warn(
+        `Package ${packageName}@${version} is already installed in this project.`,
+      );
+    } else {
+      packageFiles.forEach(async (file) => {
+        const {
+          path: filePath,
+          fullname: fileFullname,
+          data: fileContents,
+        } = file;
+
+        if (!this.packageFileGenerator) return;
+
+        const directoryRelativePath = filePath.replace(packageRemotePath, '');
+        const fileRelativePath = fileFullname.replace(packageRemotePath, '');
+
+        await this.packageFileGenerator.generateFile({
+          basePath: path.join(this.cliWorkingDir, packageLocalPath),
+          directoryRelativePath,
+          fileRelativePath,
+          fileContents,
+        });
+      });
+      consola.log(`Package ${packageName}@${version} successfully installed!`);
     }
   }
 }

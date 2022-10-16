@@ -1,6 +1,7 @@
 import { INTERACTIVE_CLI_COMMANDS } from '../helpers/constants.js';
 import { LocalLibrary } from '../local-library.js';
 import { RemoteLibrary } from '../remote-library.js';
+import { InstallPackageCliResolver } from './install-package.cli-resolver.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
 import { LocalPackagesListingCliResolver } from './local-packages-listing.cli-resolver.js';
 import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
@@ -16,6 +17,7 @@ interface IMainCommandsCliResolverInitFn {
   remotePackageLatestVersionCliResolver: RemotePackageLatestVersionCliResolver;
   packagePublishingCliResolver: PackagePublishingCliResolver;
   localPackagesListingCliResolver: LocalPackagesListingCliResolver;
+  installPackageCliResolver: InstallPackageCliResolver;
 }
 
 /* ========================================================================== */
@@ -29,6 +31,7 @@ export class MainCommandsCliResolver {
   remotePackageLatestVersionCliResolver?: RemotePackageLatestVersionCliResolver;
   packagePublishingCliResolver?: PackagePublishingCliResolver;
   localPackagesListingCliResolver?: LocalPackagesListingCliResolver;
+  installPackageCliResolver?: InstallPackageCliResolver;
 
   /* ------------------------------------------------------------------------ */
   init({
@@ -39,6 +42,7 @@ export class MainCommandsCliResolver {
     remotePackageLatestVersionCliResolver,
     packagePublishingCliResolver,
     localPackagesListingCliResolver,
+    installPackageCliResolver,
   }: IMainCommandsCliResolverInitFn) {
     this.verbose = verbose;
     this.localLibrary = localLibrary;
@@ -48,6 +52,7 @@ export class MainCommandsCliResolver {
       remotePackageLatestVersionCliResolver;
     this.packagePublishingCliResolver = packagePublishingCliResolver;
     this.localPackagesListingCliResolver = localPackagesListingCliResolver;
+    this.installPackageCliResolver = installPackageCliResolver;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -65,6 +70,7 @@ export class MainCommandsCliResolver {
         if (!this.remoteLibrary) return;
         if (!this.packagePublishingCliResolver) return;
         if (!this.remotePackageLatestVersionCliResolver) return;
+        if (!this.installPackageCliResolver) return;
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.listInstalledPackages:
@@ -82,6 +88,10 @@ export class MainCommandsCliResolver {
 
           case INTERACTIVE_CLI_COMMANDS.getRemotePackageLatestVersion:
             this.remotePackageLatestVersionCliResolver.resolveSelectLibraryPrompt();
+            break;
+
+          case INTERACTIVE_CLI_COMMANDS.installPackage:
+            this.installPackageCliResolver.resolveSelectLibraryPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:

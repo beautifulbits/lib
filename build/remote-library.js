@@ -188,7 +188,7 @@ export class RemoteLibrary {
         }
         else {
             files.forEach(async (file) => {
-                const packageVersionBasePath = path.join(library, collection, version);
+                const packageVersionBasePath = path.join(library, collection, name, version);
                 const directoryRelativePathForVersion = path.join(packageVersionBasePath, file.relativePath.replace(packageLocalRelativePath, ''));
                 const fileRelativePathForVersion = path.join(packageVersionBasePath, file.relativePath.replace(packageLocalRelativePath, ''), file.name);
                 await this.packageFileGenerator.generateFile({

@@ -291,7 +291,12 @@ export class RemoteLibrary {
       consola.error(`Package ${name}@${version} already published`);
     } else {
       files.forEach(async (file) => {
-        const packageVersionBasePath = path.join(library, collection, version);
+        const packageVersionBasePath = path.join(
+          library,
+          collection,
+          name,
+          version,
+        );
 
         const directoryRelativePathForVersion = path.join(
           packageVersionBasePath,

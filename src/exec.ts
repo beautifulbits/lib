@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import sourceMapSupport from 'source-map-support';
+sourceMapSupport.install();
+
 import { LocalLibrary } from './local-library.js';
 import { RemoteLibrary } from './remote-library.js';
 import { InteractiveCli } from './interactive-cli/interactive-cli.js';
@@ -12,13 +15,18 @@ const libDir = `/src/lib/`;
     verbose: false,
   });
 
-  const remoteLibrary = new RemoteLibrary({
+  const remoteLibrary = new RemoteLibrary();
+
+  const localLibrary = new LocalLibrary();
+
+  remoteLibrary.init({
     path: remoteLibraryPath,
     packageFileGenerator,
     verbose: false,
+    localLibrary,
   });
 
-  const localLibrary = new LocalLibrary({
+  localLibrary.init({
     localLibraryDirectory: libDir,
     verbose: false,
     packageFileGenerator,

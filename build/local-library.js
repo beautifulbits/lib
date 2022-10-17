@@ -9,19 +9,24 @@ import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 /* ========================================================================== */
 export class LocalLibrary {
     /* ------------------------------------------------------------------------ */
-    constructor({ localLibraryDirectory, verbose = false, packageFileGenerator, remoteLibrary, }) {
-        this.verbose = verbose;
-        this.packageFileGenerator = packageFileGenerator;
-        this.cliWorkingDir = process.cwd();
-        this.libDir = localLibraryDirectory;
-        this.libPath = path.join(this.cliWorkingDir, this.libDir);
-        this.remoteLibrary = remoteLibrary;
+    constructor() {
         this.packagesCatalog = {};
         this.libConfigFiles = [];
+        this.cliWorkingDir = process.cwd();
+    }
+    /* ------------------------------------------------------------------------ */
+    init({ localLibraryDirectory, verbose = false, packageFileGenerator, remoteLibrary, }) {
+        this.libDir = localLibraryDirectory;
+        this.libPath = path.join(this.cliWorkingDir, this.libDir);
+        this.packageFileGenerator = packageFileGenerator;
+        this.remoteLibrary = remoteLibrary;
+        this.verbose = verbose;
     }
     /* =========================== SCANNING LIBRARY =========================== */
     /* ------------------------------------------------------------------------ */
     async findLibConfigFiles() {
+        if (!this.libPath)
+            return;
         try {
             if (this.verbose) {
                 consola.log(`Scanning ${this.libPath} for modules.`);
@@ -118,7 +123,7 @@ export class LocalLibrary {
             });
         });
         if (!packageMetadata) {
-            consola.warn(`Config for package ${selectedPackage} not found.`);
+            consola.warn(`Config for local package ${selectedPackage} not found.`);
         }
         return packageMetadata;
     }
@@ -198,6 +203,10 @@ export class LocalLibrary {
                     consola.warn(`Error determining new version for package ${packageName}: update type ${updateType} not supported.`);
             }
         }
+        if (!this.remoteLibrary)
+            return;
+        if (!this.packageFileGenerator)
+            return;
         if (newVersion) {
             const remotePackageConfig = await this.remoteLibrary.findPublishedPackageMetadata(packageName, newVersion);
             if (!remotePackageConfig) {
@@ -211,6 +220,7 @@ export class LocalLibrary {
                         collection,
                         version: newVersion,
                         packagePath: path,
+                        rootPath: this.cliWorkingDir,
                     });
                     return true;
                 }
@@ -231,6 +241,8 @@ export class LocalLibrary {
     }
     /* ------------------------------------------------------------------------ */
     async publishPackage(packageName, updateType) {
+        if (!this.remoteLibrary)
+            return;
         const isUpdateSuccess = await this.updatePackageVersion(packageName, updateType);
         if (isUpdateSuccess) {
             const packagesFilesAndMetadata = await this.grabPackageFilesAndMetadataForPublish(packageName);
@@ -243,8 +255,34 @@ export class LocalLibrary {
                     version: config.version,
                     files: packageFiles,
                     packageLocalRelativePath: path.replace(this.cliWorkingDir, ''),
+                    collection: config.collection,
+                    library: config.library,
                 });
             }
+        }
+    }
+    /* ========================== INSTALLING PACKAGES ========================= */
+    /* ------------------------------------------------------------------------ */
+    async installPackage({ packageFiles, packageName, packageRemotePath, packageLocalPath, version, }) {
+        const packageMetadata = await this.findPackageMetadata(packageName);
+        if (packageMetadata?.config.version === version) {
+            consola.warn(`Package ${packageName}@${version} is already installed in this project.`);
+        }
+        else {
+            packageFiles.forEach(async (file) => {
+                const { path: filePath, fullname: fileFullname, data: fileContents, } = file;
+                if (!this.packageFileGenerator)
+                    return;
+                const directoryRelativePath = filePath.replace(packageRemotePath, '');
+                const fileRelativePath = fileFullname.replace(packageRemotePath, '');
+                await this.packageFileGenerator.generateFile({
+                    basePath: path.join(this.cliWorkingDir, packageLocalPath),
+                    directoryRelativePath,
+                    fileRelativePath,
+                    fileContents,
+                });
+            });
+            consola.log(`Package ${packageName}@${version} successfully installed!`);
         }
     }
 }

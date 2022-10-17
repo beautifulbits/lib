@@ -42,7 +42,7 @@ export class RemotePackageLatestVersionCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLibraryPrompt();
+      await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
 
     await selectPrompt
       .run()
@@ -70,7 +70,7 @@ export class RemotePackageLatestVersionCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectCollectionPrompt(
+      await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(
         selectedLibrary,
       );
 
@@ -104,7 +104,7 @@ export class RemotePackageLatestVersionCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectPackagePrompt(
+      await this.mainCommandsCliPrompt.getSelectLocalPackagePrompt(
         selectedLibrary,
         selectedCollection,
       );

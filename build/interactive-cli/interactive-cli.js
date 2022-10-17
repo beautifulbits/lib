@@ -3,6 +3,7 @@ import { MainCommandsCliResolver } from './main-commands.cli-resolver.js';
 import { LocalPackagesListingCliResolver } from './local-packages-listing.cli-resolver.js';
 import { PackagePublishingCliResolver } from './package-publishing.cli-resolver.js';
 import { RemotePackageLatestVersionCliResolver } from './remote-package-latest-version.cli-resolver.js';
+import { InstallPackageCliResolver } from './install-package.cli-resolver.js';
 /* ========================================================================== */
 /*                               INTERACTIVE CLI                              */
 /* ========================================================================== */
@@ -14,6 +15,7 @@ export class InteractiveCli {
         const localPackagesListingCliResolver = new LocalPackagesListingCliResolver();
         const packagePublishingCliResolver = new PackagePublishingCliResolver();
         const remotePackageLatestVersionCliResolver = new RemotePackageLatestVersionCliResolver();
+        const installPackageCliResolver = new InstallPackageCliResolver();
         mainCommandsCliPrompt.init({
             verbose,
             localLibrary,
@@ -27,6 +29,7 @@ export class InteractiveCli {
             localPackagesListingCliResolver,
             packagePublishingCliResolver,
             remotePackageLatestVersionCliResolver,
+            installPackageCliResolver,
         });
         localPackagesListingCliResolver.init({
             verbose,
@@ -36,6 +39,13 @@ export class InteractiveCli {
             mainCommandsCliResolver,
         });
         packagePublishingCliResolver.init({
+            verbose,
+            localLibrary,
+            remoteLibrary,
+            mainCommandsCliPrompt,
+            mainCommandsCliResolver,
+        });
+        installPackageCliResolver.init({
             verbose,
             localLibrary,
             remoteLibrary,

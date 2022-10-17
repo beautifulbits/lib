@@ -16,7 +16,7 @@ export class LocalPackagesListingCliResolver {
     async resolveSelectLibraryPrompt() {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLibraryPrompt();
+        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -42,7 +42,7 @@ export class LocalPackagesListingCliResolver {
     async resolveSelectCollectionPrompt(selectedLibrary) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectCollectionPrompt(selectedLibrary);
+        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(selectedLibrary);
         await selectPrompt
             .run()
             .then(async (answer) => {

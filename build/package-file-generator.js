@@ -14,12 +14,13 @@ export class PackageFileGenerator {
         this.verbose = verbose;
     }
     /* ------------------------------------------------------------------------ */
-    async generateLocalConfigFile({ name, version, library, collection, packagePath, }) {
+    async generateLocalConfigFile({ name, version, library, collection, packagePath, rootPath, }) {
         const packageConfig = {
             name,
             library,
             collection,
             version: version ? version : NEW_PACKAGE_INITIAL_VERSION,
+            path: packagePath.replace(rootPath, ''),
         };
         const fileContents = JSON.stringify(packageConfig, null, 2);
         try {

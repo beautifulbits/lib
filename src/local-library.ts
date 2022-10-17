@@ -129,19 +129,19 @@ export class LocalLibrary {
   /* =========================== LISTING PACKAGES =========================== */
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledLibraries() {
+  public async getInstalledLibraries() {
     await this.getInstalledPackagesCatalog();
     return Object.keys(this.packagesCatalog);
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledCollections(selectedLibrary: string) {
+  public async getInstalledCollections(selectedLibrary: string) {
     await this.getInstalledPackagesCatalog();
     return Object.keys(this.packagesCatalog[selectedLibrary]);
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledPackages(
+  public async getInstalledPackages(
     selectedLibrary?: string,
     selectedCollection?: string,
   ) {
@@ -154,7 +154,7 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async showInstalledPackagesAsTable(
+  public async showInstalledPackagesAsTable(
     selectedLibrary?: string,
     selectedCollection?: string,
     selectedPackage?: string,
@@ -171,7 +171,7 @@ export class LocalLibrary {
   /* ======================== GETTING PACKAGE DETAILS ======================= */
 
   /* ------------------------------------------------------------------------ */
-  async findPackageMetadata(
+  private async findPackageMetadata(
     selectedPackage: string,
   ): Promise<TPackageMetadata | undefined> {
     let packageMetadata;
@@ -212,7 +212,7 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledPackageVersion(packageName: string) {
+  public async getInstalledPackageVersion(packageName: string) {
     const packageMetadata = await this.findPackageMetadata(packageName);
 
     if (packageMetadata?.config?.version) {
@@ -222,7 +222,7 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async grabPackageFilesAndMetadata(packageName: string): Promise<
+  public async grabPackageFilesAndMetadata(packageName: string): Promise<
     | {
         path: string;
         config: TPackageConfig;
@@ -268,7 +268,7 @@ export class LocalLibrary {
   /* =========================== UPDATING PACKAGES ========================== */
 
   /* ------------------------------------------------------------------------ */
-  async updatePackageVersion(
+  private async updatePackageVersion(
     packageName: string,
     updateType?: VERSION_UPDATE_TYPES,
   ) {
@@ -358,7 +358,10 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async publishPackage(packageName: string, updateType?: VERSION_UPDATE_TYPES) {
+  public async publishPackage(
+    packageName: string,
+    updateType?: VERSION_UPDATE_TYPES,
+  ) {
     if (!this.remoteLibrary) return;
 
     const isUpdateSuccess = await this.updatePackageVersion(
@@ -392,7 +395,7 @@ export class LocalLibrary {
   /* ========================== INSTALLING PACKAGES ========================= */
 
   /* ------------------------------------------------------------------------ */
-  async installPackage({
+  public async installPackage({
     packageFiles,
     packageName,
     packageRemotePath,

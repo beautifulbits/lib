@@ -4,6 +4,7 @@ import path from 'path';
 import boxen from 'boxen';
 import mkdirp from 'mkdirp';
 import consola from 'consola';
+import { TPackageConfig } from './@types/package-config';
 import {
   LIB_CONFIG_FILENAME,
   NEW_PACKAGE_INITIAL_VERSION,
@@ -36,12 +37,13 @@ export class PackageFileGenerator {
     packagePath: string;
     rootPath: string;
   }) {
-    const packageConfig = {
+    const packageConfig: TPackageConfig = {
       name,
       library,
       collection,
       version: version ? version : NEW_PACKAGE_INITIAL_VERSION,
       path: packagePath.replace(rootPath, ''),
+      date: new Date().toUTCString(),
     };
 
     const fileContents = JSON.stringify(packageConfig, null, 2);

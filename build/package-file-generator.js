@@ -21,6 +21,7 @@ export class PackageFileGenerator {
             collection,
             version: version ? version : NEW_PACKAGE_INITIAL_VERSION,
             path: packagePath.replace(rootPath, ''),
+            date: new Date().toUTCString(),
         };
         const fileContents = JSON.stringify(packageConfig, null, 2);
         try {

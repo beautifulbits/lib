@@ -7,25 +7,28 @@ import { RemoteLibrary } from '../remote-library.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
 import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
 import { MainCommandsCliResolver } from './main-commands.cli-resolver.js';
+import { PackageDiffing } from '../package-diffing.js';
 
 /* ================================ INTERFACE =============================== */
-interface IInstallPackageCliResolverInitFn {
+interface IPackageDiffingCliResolverInitFn {
   verbose?: boolean;
   localLibrary: LocalLibrary;
   remoteLibrary: RemoteLibrary;
   mainCommandsCliPrompt: MainCommandsCliPrompt;
   mainCommandsCliResolver: MainCommandsCliResolver;
+  packageDiffing: PackageDiffing;
 }
 
 /* ========================================================================== */
 /*                        INSTALL PACKAGE CLI RESOLVER                        */
 /* ========================================================================== */
-export class InstallPackageCliResolver {
+export class PackageDiffingCliResolver {
   verbose?: boolean;
   localLibrary?: LocalLibrary;
   remoteLibrary?: RemoteLibrary;
   mainCommandsCliPrompt?: MainCommandsCliPrompt;
   mainCommandsCliResolver?: MainCommandsCliResolver;
+  packageDiffing?: PackageDiffing;
 
   /* ------------------------------------------------------------------------ */
   init({
@@ -34,12 +37,14 @@ export class InstallPackageCliResolver {
     remoteLibrary,
     mainCommandsCliPrompt,
     mainCommandsCliResolver,
-  }: IInstallPackageCliResolverInitFn) {
+    packageDiffing,
+  }: IPackageDiffingCliResolverInitFn) {
     this.verbose = verbose;
     this.localLibrary = localLibrary;
     this.remoteLibrary = remoteLibrary;
     this.mainCommandsCliPrompt = mainCommandsCliPrompt;
     this.mainCommandsCliResolver = mainCommandsCliResolver;
+    this.packageDiffing = packageDiffing;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -47,7 +52,7 @@ export class InstallPackageCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectRemoteLibraryPrompt();
+      await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
 
     await selectPrompt
       .run()
@@ -75,7 +80,7 @@ export class InstallPackageCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectRemoteCollectionPrompt(
+      await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(
         selectedLibrary,
       );
 
@@ -108,7 +113,7 @@ export class InstallPackageCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectRemotePackagePrompt(
+      await this.mainCommandsCliPrompt.getSelectLocalPackagePrompt(
         selectedLibrary,
         selectedCollection,
       );
@@ -126,24 +131,21 @@ export class InstallPackageCliResolver {
             break;
 
           default:
-            const latestRemoteVersion =
-              await this.remoteLibrary.getRemotePackageLatestVersion(answer);
-
-            await this.remoteLibrary.installPackage({
-              packageName: answer,
-              version: latestRemoteVersion,
-            });
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            this.resolveSelectVersionPrompt(answer);
+            break;
         }
       })
       .catch(promptErrorHandler);
   }
 
   /* ------------------------------------------------------------------------ */
-  async resolveUpdateTypePrompt(packageName: string) {
+  async resolveSelectVersionPrompt(packageName: string) {
     if (!this.mainCommandsCliPrompt) return;
 
-    const selectPrompt = this.mainCommandsCliPrompt.getSelectUpdateTypePrompt();
+    const selectPrompt =
+      await this.mainCommandsCliPrompt.getSelectRemotePackageVersionPrompt(
+        packageName,
+      );
 
     await selectPrompt.run().then(async (answer: VERSION_UPDATE_TYPES) => {
       if (!this.mainCommandsCliResolver) return;
@@ -154,7 +156,7 @@ export class InstallPackageCliResolver {
           this.mainCommandsCliResolver.resolveMainCommandsPrompt();
           break;
         default:
-          await this.localLibrary.publishPackage(packageName, answer);
+          await this.packageDiffing?.diffWithRemotePackage(packageName, answer);
           this.mainCommandsCliResolver.resolveMainCommandsPrompt();
       }
     });

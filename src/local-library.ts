@@ -11,11 +11,11 @@ import {
 import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
 import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 import { PackageFileGenerator } from './package-file-generator.js';
-import { RemoteLibrary } from './remote-library';
-import { TReaddirFileExtended } from './@types/readdir-file.js';
+import { RemoteLibrary } from './remote-library.js';
+import { TReaddirFileExtended } from './@types/readdir-file';
 import { TPackageMetadata } from './@types/package-metadata';
-import { TPackageConfig } from './@types/package-config.js';
-import { TPackagesCatalog } from './@types/packages-catalog.js';
+import { TPackageConfig } from './@types/package-config';
+import { TPackagesCatalog } from './@types/packages-catalog';
 
 /* ================================ INTERFACE =============================== */
 interface ILocalLibraryInitFn {
@@ -222,7 +222,7 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async grabPackageFilesAndMetadataForPublish(packageName: string): Promise<
+  async grabPackageFilesAndMetadata(packageName: string): Promise<
     | {
         path: string;
         config: TPackageConfig;
@@ -367,8 +367,9 @@ export class LocalLibrary {
     );
 
     if (isUpdateSuccess) {
-      const packagesFilesAndMetadata =
-        await this.grabPackageFilesAndMetadataForPublish(packageName);
+      const packagesFilesAndMetadata = await this.grabPackageFilesAndMetadata(
+        packageName,
+      );
 
       if (
         packagesFilesAndMetadata?.path &&

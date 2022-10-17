@@ -1,8 +1,8 @@
 import { INTERACTIVE_CLI_COMMANDS } from '../helpers/constants.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
-import { LocalLibrary } from '../local-library';
-import { RemoteLibrary } from '../remote-library';
-import { MainCommandsCliPrompt } from './main-commands.cli-prompt';
+import { LocalLibrary } from '../local-library.js';
+import { RemoteLibrary } from '../remote-library.js';
+import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
 import { MainCommandsCliResolver } from './main-commands.cli-resolver.js';
 
 /* ================================ INTERFACE =============================== */

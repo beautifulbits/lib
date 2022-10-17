@@ -3,14 +3,17 @@ import { MainCommandsCliResolver } from './main-commands.cli-resolver.js';
 import { LocalPackagesListingCliResolver } from './local-packages-listing.cli-resolver.js';
 import { PackagePublishingCliResolver } from './package-publishing.cli-resolver.js';
 import { RemotePackageLatestVersionCliResolver } from './remote-package-latest-version.cli-resolver.js';
-import { LocalLibrary } from '../local-library';
-import { RemoteLibrary } from '../remote-library';
+import { LocalLibrary } from '../local-library.js';
+import { RemoteLibrary } from '../remote-library.js';
 import { InstallPackageCliResolver } from './install-package.cli-resolver.js';
+import { PackageDiffingCliResolver } from './package-diffing.cli-resolver.js';
+import { PackageDiffing } from '../package-diffing.js';
 
 interface IInteractiveCli {
   verbose: boolean;
   localLibrary: LocalLibrary;
   remoteLibrary: RemoteLibrary;
+  packageDiffing: PackageDiffing;
 }
 
 /* ========================================================================== */
@@ -24,8 +27,12 @@ export class InteractiveCli {
     verbose = true,
     localLibrary,
     remoteLibrary,
+    packageDiffing,
   }: IInteractiveCli) {
+    // Instantiate prompts
     const mainCommandsCliPrompt = new MainCommandsCliPrompt();
+
+    // Instantiate prompt resolvers
     const mainCommandsCliResolver = new MainCommandsCliResolver();
     const localPackagesListingCliResolver =
       new LocalPackagesListingCliResolver();
@@ -33,7 +40,11 @@ export class InteractiveCli {
     const remotePackageLatestVersionCliResolver =
       new RemotePackageLatestVersionCliResolver();
     const installPackageCliResolver = new InstallPackageCliResolver();
+    const packageDiffingCliResolver = new PackageDiffingCliResolver();
 
+    // Init class singletons
+    // Done this way since the classes have circular dependencies
+    // with each other
     mainCommandsCliPrompt.init({
       verbose,
       localLibrary,
@@ -49,6 +60,7 @@ export class InteractiveCli {
       packagePublishingCliResolver,
       remotePackageLatestVersionCliResolver,
       installPackageCliResolver,
+      packageDiffingCliResolver,
     });
 
     localPackagesListingCliResolver.init({
@@ -65,6 +77,15 @@ export class InteractiveCli {
       remoteLibrary,
       mainCommandsCliPrompt,
       mainCommandsCliResolver,
+    });
+
+    packageDiffingCliResolver.init({
+      verbose,
+      localLibrary,
+      remoteLibrary,
+      mainCommandsCliPrompt,
+      mainCommandsCliResolver,
+      packageDiffing,
     });
 
     installPackageCliResolver.init({

@@ -21,6 +21,7 @@ export class MainCommandsCliPrompt {
             name: 'Main Commands',
             message: 'Commands:',
             choices: [
+                INTERACTIVE_CLI_COMMANDS.compareInstalledPackageWithRemote,
                 INTERACTIVE_CLI_COMMANDS.listInstalledPackages,
                 INTERACTIVE_CLI_COMMANDS.listRemotePackages,
                 INTERACTIVE_CLI_COMMANDS.getRemotePackageLatestVersion,
@@ -118,6 +119,18 @@ export class MainCommandsCliPrompt {
             name: 'select-package',
             message: 'Select package:',
             choices: [...packages, INTERACTIVE_CLI_COMMANDS.exit],
+        });
+    }
+    /* ------------------------------------------------------------------------ */
+    async getSelectRemotePackageVersionPrompt(selectedPackage) {
+        if (!this.remoteLibrary)
+            return;
+        const versions = await this.remoteLibrary.getRemotePackageAllVersions(selectedPackage);
+        printSpacingBetweenPrompts();
+        return new Select({
+            name: 'select-version',
+            message: 'Select versions:',
+            choices: [...versions, INTERACTIVE_CLI_COMMANDS.exit],
         });
     }
     /* ============================== VERSIONING ============================== */

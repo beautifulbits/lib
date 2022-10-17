@@ -3,18 +3,19 @@ import consola from 'consola';
 import path from 'path';
 import boxen from 'boxen';
 import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
+import { showVersionsAsTable } from './helpers/show-versions-as-table.js';
 import {
   LIB_CONFIG_FILENAME,
   UNPUBLISHED_VERSION,
 } from './helpers/constants.js';
 import { PackageFileGenerator } from './package-file-generator.js';
 import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
-import { TPackageMetadata } from './@types/package-metadata.js';
-import { TPackagesCatalog } from './@types/packages-catalog.js';
-import { TReaddirFileExtended } from './@types/readdir-file.js';
+import { TPackageMetadata } from './@types/package-metadata';
+import { TPackagesCatalog } from './@types/packages-catalog';
+import { TReaddirFileExtended } from './@types/readdir-file';
 import { TReaddirFile } from './@types/readdir-file';
 import { TPackageConfig } from './@types/package-config';
-import { LocalLibrary } from './local-library';
+import { LocalLibrary } from './local-library.js';
 
 /* ================================ INTERFACE =============================== */
 interface IRemoteLibraryInitFn {
@@ -246,7 +247,27 @@ export class RemoteLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async grabPackageFilesAndMetadataInRemoteLibrary(
+  async getRemotePackageAllVersions(packageName: string, show = false) {
+    const packagesMetadata = await this.findPublishedPackageMetadata(
+      packageName,
+    );
+
+    let versions: string[] = [];
+    if (packagesMetadata !== undefined && Array.isArray(packagesMetadata)) {
+      packagesMetadata.forEach((packageMetadata) => {
+        const packageVersion = packageMetadata.config.version;
+        versions.push(packageVersion);
+      });
+    }
+
+    if (show) {
+      showVersionsAsTable(packageName, versions);
+    }
+    return versions;
+  }
+
+  /* ------------------------------------------------------------------------ */
+  async grabPackageFilesAndMetadata(
     packageName: string,
     selectedVersion: string,
   ): Promise<{
@@ -382,11 +403,10 @@ export class RemoteLibrary {
   }) {
     if (!this.localLibrary) return;
 
-    const filesAndMetadata =
-      await this.grabPackageFilesAndMetadataInRemoteLibrary(
-        packageName,
-        version,
-      );
+    const filesAndMetadata = await this.grabPackageFilesAndMetadata(
+      packageName,
+      version,
+    );
 
     if (filesAndMetadata) {
       const {

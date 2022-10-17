@@ -6,6 +6,7 @@ import { LocalLibrary } from './local-library.js';
 import { RemoteLibrary } from './remote-library.js';
 import { InteractiveCli } from './interactive-cli/interactive-cli.js';
 import { PackageFileGenerator } from './package-file-generator.js';
+import { PackageDiffing } from './package-diffing.js';
 
 const remoteLibraryPath = `/Users/Nathaniel/Code/shared-lib`;
 const libDir = `/src/lib/`;
@@ -18,6 +19,8 @@ const libDir = `/src/lib/`;
   const remoteLibrary = new RemoteLibrary();
 
   const localLibrary = new LocalLibrary();
+
+  const packageDiffing = new PackageDiffing();
 
   remoteLibrary.init({
     path: remoteLibraryPath,
@@ -33,10 +36,16 @@ const libDir = `/src/lib/`;
     remoteLibrary,
   });
 
+  packageDiffing.init({
+    localLibrary,
+    remoteLibrary,
+  });
+
   const interactiveCli = new InteractiveCli({
     verbose: false,
     localLibrary,
     remoteLibrary,
+    packageDiffing,
   });
 
   interactiveCli.init();

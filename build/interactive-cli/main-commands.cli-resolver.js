@@ -5,7 +5,7 @@ import { promptErrorHandler } from './interactive-cli.helpers.js';
 /* ========================================================================== */
 export class MainCommandsCliResolver {
     /* ------------------------------------------------------------------------ */
-    init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, remotePackageLatestVersionCliResolver, packagePublishingCliResolver, localPackagesListingCliResolver, installPackageCliResolver, }) {
+    init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, remotePackageLatestVersionCliResolver, packagePublishingCliResolver, localPackagesListingCliResolver, installPackageCliResolver, packageDiffingCliResolver, }) {
         this.verbose = verbose;
         this.localLibrary = localLibrary;
         this.remoteLibrary = remoteLibrary;
@@ -15,6 +15,7 @@ export class MainCommandsCliResolver {
         this.packagePublishingCliResolver = packagePublishingCliResolver;
         this.localPackagesListingCliResolver = localPackagesListingCliResolver;
         this.installPackageCliResolver = installPackageCliResolver;
+        this.packageDiffingCliResolver = packageDiffingCliResolver;
     }
     /* ------------------------------------------------------------------------ */
     async resolveMainCommandsPrompt() {
@@ -52,6 +53,9 @@ export class MainCommandsCliResolver {
                     break;
                 case INTERACTIVE_CLI_COMMANDS.installPackage:
                     this.installPackageCliResolver.resolveSelectLibraryPrompt();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.compareInstalledPackageWithRemote:
+                    this.packageDiffingCliResolver?.resolveSelectLibraryPrompt();
                     break;
                 case INTERACTIVE_CLI_COMMANDS.exit:
                     process.exit();

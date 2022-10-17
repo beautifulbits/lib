@@ -136,7 +136,7 @@ export class LocalLibrary {
         return UNPUBLISHED_VERSION;
     }
     /* ------------------------------------------------------------------------ */
-    async grabPackageFilesAndMetadataForPublish(packageName) {
+    async grabPackageFilesAndMetadata(packageName) {
         const packageMetadata = await this.findPackageMetadata(packageName);
         if (packageMetadata?.path && packageMetadata?.config) {
             const { path, config } = packageMetadata;
@@ -245,7 +245,7 @@ export class LocalLibrary {
             return;
         const isUpdateSuccess = await this.updatePackageVersion(packageName, updateType);
         if (isUpdateSuccess) {
-            const packagesFilesAndMetadata = await this.grabPackageFilesAndMetadataForPublish(packageName);
+            const packagesFilesAndMetadata = await this.grabPackageFilesAndMetadata(packageName);
             if (packagesFilesAndMetadata?.path &&
                 packagesFilesAndMetadata?.packageFiles &&
                 packagesFilesAndMetadata?.config) {

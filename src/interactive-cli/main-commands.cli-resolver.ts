@@ -7,6 +7,7 @@ import { LocalPackagesListingCliResolver } from './local-packages-listing.cli-re
 import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
 import { PackagePublishingCliResolver } from './package-publishing.cli-resolver.js';
 import { RemotePackageLatestVersionCliResolver } from './remote-package-latest-version.cli-resolver.js';
+import { PackageDiffingCliResolver } from './package-diffing.cli-resolver.js';
 
 /* ================================ INTERFACE =============================== */
 interface IMainCommandsCliResolverInitFn {
@@ -18,6 +19,7 @@ interface IMainCommandsCliResolverInitFn {
   packagePublishingCliResolver: PackagePublishingCliResolver;
   localPackagesListingCliResolver: LocalPackagesListingCliResolver;
   installPackageCliResolver: InstallPackageCliResolver;
+  packageDiffingCliResolver: PackageDiffingCliResolver;
 }
 
 /* ========================================================================== */
@@ -32,6 +34,7 @@ export class MainCommandsCliResolver {
   packagePublishingCliResolver?: PackagePublishingCliResolver;
   localPackagesListingCliResolver?: LocalPackagesListingCliResolver;
   installPackageCliResolver?: InstallPackageCliResolver;
+  packageDiffingCliResolver?: PackageDiffingCliResolver;
 
   /* ------------------------------------------------------------------------ */
   init({
@@ -43,6 +46,7 @@ export class MainCommandsCliResolver {
     packagePublishingCliResolver,
     localPackagesListingCliResolver,
     installPackageCliResolver,
+    packageDiffingCliResolver,
   }: IMainCommandsCliResolverInitFn) {
     this.verbose = verbose;
     this.localLibrary = localLibrary;
@@ -53,6 +57,7 @@ export class MainCommandsCliResolver {
     this.packagePublishingCliResolver = packagePublishingCliResolver;
     this.localPackagesListingCliResolver = localPackagesListingCliResolver;
     this.installPackageCliResolver = installPackageCliResolver;
+    this.packageDiffingCliResolver = packageDiffingCliResolver;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -92,6 +97,10 @@ export class MainCommandsCliResolver {
 
           case INTERACTIVE_CLI_COMMANDS.installPackage:
             this.installPackageCliResolver.resolveSelectLibraryPrompt();
+            break;
+
+          case INTERACTIVE_CLI_COMMANDS.compareInstalledPackageWithRemote:
+            this.packageDiffingCliResolver?.resolveSelectLibraryPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:

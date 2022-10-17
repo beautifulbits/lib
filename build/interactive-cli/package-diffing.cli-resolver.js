@@ -17,7 +17,7 @@ export class PackageDiffingCliResolver {
     async resolveSelectLibraryPrompt() {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
+        const selectPrompt = await this.mainCommandsCliPrompt.selectLocalLibraryPrompt();
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -25,13 +25,13 @@ export class PackageDiffingCliResolver {
                 return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.showAll:
-                    this.resolveSelectPackagePrompt();
+                    await this.resolveSelectPackagePrompt();
                     break;
                 case INTERACTIVE_CLI_COMMANDS.exit:
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
-                    this.resolveSelectCollectionPrompt(answer);
+                    await this.resolveSelectCollectionPrompt(answer);
             }
         })
             .catch(promptErrorHandler);
@@ -40,7 +40,7 @@ export class PackageDiffingCliResolver {
     async resolveSelectCollectionPrompt(selectedLibrary) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(selectedLibrary);
+        const selectPrompt = await this.mainCommandsCliPrompt.selectLocalCollectionPrompt(selectedLibrary);
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -48,10 +48,10 @@ export class PackageDiffingCliResolver {
                 return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.showAll:
-                    this.resolveSelectPackagePrompt(selectedLibrary);
+                    await this.resolveSelectPackagePrompt(selectedLibrary);
                     break;
                 case INTERACTIVE_CLI_COMMANDS.exit:
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
                     await this.resolveSelectPackagePrompt(selectedLibrary, answer);
@@ -63,7 +63,7 @@ export class PackageDiffingCliResolver {
     async resolveSelectPackagePrompt(selectedLibrary, selectedCollection) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalPackagePrompt(selectedLibrary, selectedCollection);
+        const selectPrompt = await this.mainCommandsCliPrompt.selectLocalPackagePrompt(selectedLibrary, selectedCollection);
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -75,10 +75,10 @@ export class PackageDiffingCliResolver {
                 return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.exit:
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
-                    this.resolveSelectVersionPrompt(answer);
+                    await this.resolveSelectVersionPrompt(answer);
                     break;
             }
         })
@@ -88,7 +88,7 @@ export class PackageDiffingCliResolver {
     async resolveSelectVersionPrompt(packageName) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectRemotePackageVersionPrompt(packageName);
+        const selectPrompt = await this.mainCommandsCliPrompt.selectRemotePackageVersionPrompt(packageName);
         await selectPrompt.run().then(async (answer) => {
             if (!this.mainCommandsCliResolver)
                 return;
@@ -96,11 +96,11 @@ export class PackageDiffingCliResolver {
                 return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.exit:
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
                     await this.packageDiffing?.diffWithRemotePackage(packageName, answer);
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             }
         });
     }

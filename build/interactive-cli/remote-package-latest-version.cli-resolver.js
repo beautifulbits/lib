@@ -15,7 +15,7 @@ export class RemotePackageLatestVersionCliResolver {
     async resolveSelectLibraryPrompt() {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
+        const selectPrompt = await this.mainCommandsCliPrompt.selectLocalLibraryPrompt();
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -26,10 +26,10 @@ export class RemotePackageLatestVersionCliResolver {
                     await this.resolveSelectPackagePrompt();
                     break;
                 case INTERACTIVE_CLI_COMMANDS.exit:
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
-                    this.resolveSelectCollectionPrompt(answer);
+                    await this.resolveSelectCollectionPrompt(answer);
             }
         })
             .catch(promptErrorHandler);
@@ -38,7 +38,7 @@ export class RemotePackageLatestVersionCliResolver {
     async resolveSelectCollectionPrompt(selectedLibrary) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(selectedLibrary);
+        const selectPrompt = await this.mainCommandsCliPrompt.selectLocalCollectionPrompt(selectedLibrary);
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -46,10 +46,10 @@ export class RemotePackageLatestVersionCliResolver {
                 return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.showAll:
-                    this.resolveSelectPackagePrompt(selectedLibrary);
+                    await this.resolveSelectPackagePrompt(selectedLibrary);
                     break;
                 case INTERACTIVE_CLI_COMMANDS.exit:
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
                     await this.resolveSelectPackagePrompt(selectedLibrary, answer);
@@ -62,7 +62,7 @@ export class RemotePackageLatestVersionCliResolver {
     async resolveSelectPackagePrompt(selectedLibrary, selectedCollection) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = await this.mainCommandsCliPrompt.getSelectLocalPackagePrompt(selectedLibrary, selectedCollection);
+        const selectPrompt = await this.mainCommandsCliPrompt.selectLocalPackagePrompt(selectedLibrary, selectedCollection);
         await selectPrompt
             .run()
             .then(async (answer) => {
@@ -72,11 +72,11 @@ export class RemotePackageLatestVersionCliResolver {
                 return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.exit:
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
                     await this.remoteLibrary.getRemotePackageLatestVersion(answer, true);
-                    this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+                    await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             }
         })
             .catch(promptErrorHandler);

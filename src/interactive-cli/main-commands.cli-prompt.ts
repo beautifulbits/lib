@@ -39,19 +39,19 @@ export class MainCommandsCliPrompt {
   /* ================================ PROMPTS =============================== */
 
   /* ------------------------------------------------------------------------ */
-  async getMainCommandsPrompt() {
+  async mainCommandsPrompt() {
     printSpacingBetweenPrompts();
 
     return new Select({
       name: 'Main Commands',
       message: 'Commands:',
       choices: [
-        INTERACTIVE_CLI_COMMANDS.compareInstalledPackageWithRemote,
         INTERACTIVE_CLI_COMMANDS.listInstalledPackages,
         INTERACTIVE_CLI_COMMANDS.listRemotePackages,
-        INTERACTIVE_CLI_COMMANDS.getRemotePackageLatestVersion,
         INTERACTIVE_CLI_COMMANDS.publishPackage,
         INTERACTIVE_CLI_COMMANDS.installPackage,
+        INTERACTIVE_CLI_COMMANDS.getRemotePackageLatestVersion,
+        INTERACTIVE_CLI_COMMANDS.compareInstalledPackageWithRemote,
         INTERACTIVE_CLI_COMMANDS.exit,
       ],
     });
@@ -60,7 +60,7 @@ export class MainCommandsCliPrompt {
   /* ============================= LOCAL LIBRARY ============================ */
 
   /* ------------------------------------------------------------------------ */
-  async getSelectLocalLibraryPrompt() {
+  async selectLocalLibraryPrompt() {
     if (!this.localLibrary) return;
 
     const libraries = await this.localLibrary.getInstalledLibraries();
@@ -79,7 +79,7 @@ export class MainCommandsCliPrompt {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectLocalCollectionPrompt(selectedLibrary: string) {
+  async selectLocalCollectionPrompt(selectedLibrary: string) {
     if (!this.localLibrary) return;
 
     const collections = await this.localLibrary.getInstalledCollections(
@@ -100,7 +100,7 @@ export class MainCommandsCliPrompt {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectLocalPackagePrompt(
+  async selectLocalPackagePrompt(
     selectedLibrary?: string,
     selectedCollection?: string,
   ) {
@@ -123,7 +123,7 @@ export class MainCommandsCliPrompt {
   /* ============================ REMOTE LIBRARY ============================ */
 
   /* ------------------------------------------------------------------------ */
-  async getSelectRemoteLibraryPrompt() {
+  async selectRemoteLibraryPrompt() {
     if (!this.remoteLibrary) return;
 
     const libraries = await this.remoteLibrary.getRemoteLibraries();
@@ -142,7 +142,7 @@ export class MainCommandsCliPrompt {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectRemoteCollectionPrompt(selectedLibrary: string) {
+  async selectRemoteCollectionPrompt(selectedLibrary: string) {
     if (!this.remoteLibrary) return;
 
     const collections = await this.remoteLibrary.getRemoteCollections(
@@ -163,7 +163,7 @@ export class MainCommandsCliPrompt {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectRemotePackagePrompt(
+  async selectRemotePackagePrompt(
     selectedLibrary?: string,
     selectedCollection?: string,
   ) {
@@ -184,7 +184,7 @@ export class MainCommandsCliPrompt {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getSelectRemotePackageVersionPrompt(selectedPackage: string) {
+  async selectRemotePackageVersionPrompt(selectedPackage: string) {
     if (!this.remoteLibrary) return;
 
     const versions = await this.remoteLibrary.getRemotePackageAllVersions(
@@ -203,7 +203,7 @@ export class MainCommandsCliPrompt {
   /* ============================== VERSIONING ============================== */
 
   /* ------------------------------------------------------------------------ */
-  getSelectUpdateTypePrompt() {
+  selectUpdateTypePrompt() {
     let versionUpdateValues = Object.values(VERSION_UPDATE_TYPES);
     const choices: (VERSION_UPDATE_TYPES | string)[] = [
       ...versionUpdateValues,

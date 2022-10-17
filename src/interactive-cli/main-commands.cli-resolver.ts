@@ -64,8 +64,7 @@ export class MainCommandsCliResolver {
   async resolveMainCommandsPrompt() {
     if (!this.mainCommandsCliPrompt) return;
 
-    const selectPrompt =
-      await this.mainCommandsCliPrompt.getMainCommandsPrompt();
+    const selectPrompt = await this.mainCommandsCliPrompt.mainCommandsPrompt();
 
     await selectPrompt
       .run()
@@ -79,28 +78,28 @@ export class MainCommandsCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.listInstalledPackages:
-            this.localPackagesListingCliResolver.resolveSelectLibraryPrompt();
+            await this.localPackagesListingCliResolver.resolveSelectLibraryPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.listRemotePackages:
             await this.remoteLibrary.showRemotePackagesAsTable();
-            this.resolveMainCommandsPrompt();
+            await this.resolveMainCommandsPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.publishPackage:
-            this.packagePublishingCliResolver.resolveSelectLibraryPrompt();
+            await this.packagePublishingCliResolver.resolveSelectLibraryPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.getRemotePackageLatestVersion:
-            this.remotePackageLatestVersionCliResolver.resolveSelectLibraryPrompt();
+            await this.remotePackageLatestVersionCliResolver.resolveSelectLibraryPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.installPackage:
-            this.installPackageCliResolver.resolveSelectLibraryPrompt();
+            await this.installPackageCliResolver.resolveSelectLibraryPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.compareInstalledPackageWithRemote:
-            this.packageDiffingCliResolver?.resolveSelectLibraryPrompt();
+            await this.packageDiffingCliResolver?.resolveSelectLibraryPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:

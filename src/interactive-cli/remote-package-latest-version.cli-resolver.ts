@@ -42,7 +42,7 @@ export class RemotePackageLatestVersionCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
+      await this.mainCommandsCliPrompt.selectLocalLibraryPrompt();
 
     await selectPrompt
       .run()
@@ -55,11 +55,11 @@ export class RemotePackageLatestVersionCliResolver {
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
-            this.resolveSelectCollectionPrompt(answer);
+            await this.resolveSelectCollectionPrompt(answer);
         }
       })
       .catch(promptErrorHandler);
@@ -70,7 +70,7 @@ export class RemotePackageLatestVersionCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(
+      await this.mainCommandsCliPrompt.selectLocalCollectionPrompt(
         selectedLibrary,
       );
 
@@ -81,11 +81,11 @@ export class RemotePackageLatestVersionCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
-            this.resolveSelectPackagePrompt(selectedLibrary);
+            await this.resolveSelectPackagePrompt(selectedLibrary);
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
@@ -104,7 +104,7 @@ export class RemotePackageLatestVersionCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLocalPackagePrompt(
+      await this.mainCommandsCliPrompt.selectLocalPackagePrompt(
         selectedLibrary,
         selectedCollection,
       );
@@ -117,7 +117,7 @@ export class RemotePackageLatestVersionCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
@@ -125,7 +125,7 @@ export class RemotePackageLatestVersionCliResolver {
               answer,
               true,
             );
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
         }
       })
       .catch(promptErrorHandler);

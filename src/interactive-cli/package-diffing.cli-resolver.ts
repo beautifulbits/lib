@@ -52,7 +52,7 @@ export class PackageDiffingCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
+      await this.mainCommandsCliPrompt.selectLocalLibraryPrompt();
 
     await selectPrompt
       .run()
@@ -61,15 +61,15 @@ export class PackageDiffingCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
-            this.resolveSelectPackagePrompt();
+            await this.resolveSelectPackagePrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
-            this.resolveSelectCollectionPrompt(answer);
+            await this.resolveSelectCollectionPrompt(answer);
         }
       })
       .catch(promptErrorHandler);
@@ -80,7 +80,7 @@ export class PackageDiffingCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(
+      await this.mainCommandsCliPrompt.selectLocalCollectionPrompt(
         selectedLibrary,
       );
 
@@ -91,11 +91,11 @@ export class PackageDiffingCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
-            this.resolveSelectPackagePrompt(selectedLibrary);
+            await this.resolveSelectPackagePrompt(selectedLibrary);
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
@@ -113,7 +113,7 @@ export class PackageDiffingCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLocalPackagePrompt(
+      await this.mainCommandsCliPrompt.selectLocalPackagePrompt(
         selectedLibrary,
         selectedCollection,
       );
@@ -127,11 +127,11 @@ export class PackageDiffingCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
-            this.resolveSelectVersionPrompt(answer);
+            await this.resolveSelectVersionPrompt(answer);
             break;
         }
       })
@@ -143,7 +143,7 @@ export class PackageDiffingCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectRemotePackageVersionPrompt(
+      await this.mainCommandsCliPrompt.selectRemotePackageVersionPrompt(
         packageName,
       );
 
@@ -153,11 +153,11 @@ export class PackageDiffingCliResolver {
 
       switch (answer) {
         case INTERACTIVE_CLI_COMMANDS.exit:
-          this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+          await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
           break;
         default:
           await this.packageDiffing?.diffWithRemotePackage(packageName, answer);
-          this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+          await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
       }
     });
   }

@@ -1,5 +1,5 @@
 {
-  "name": "lib",
+  "name": "@beautifulbits/lib",
   "version": "0.0.1",
   "description": "Shared code manager",
   "main": "./build/index.js",

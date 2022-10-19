@@ -5,4 +5,5 @@ export type TPackageConfig = {
   version: string;
   path: string;
   date: string;
+  includeFromProjectRoot?: string[];
 };

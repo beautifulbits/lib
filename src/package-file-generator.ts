@@ -22,6 +22,20 @@ export class PackageFileGenerator {
   }
 
   /* ------------------------------------------------------------------------ */
+  async deleteDirectory(path: string) {
+    try {
+      await fs.promises.access(path);
+      await fs.promises.rm(path, { recursive: true });
+    } catch {
+      if (this.verbose) {
+        consola.warn(
+          `Didn't delete ${path}. Directory doesn't exists in project.`,
+        );
+      }
+    }
+  }
+
+  /* ------------------------------------------------------------------------ */
   async generateLocalConfigFile({
     name,
     version,
@@ -29,6 +43,7 @@ export class PackageFileGenerator {
     collection,
     packagePath,
     rootPath,
+    includeFromProjectRoot = [],
   }: {
     name: string;
     version: string;
@@ -36,6 +51,7 @@ export class PackageFileGenerator {
     collection: string;
     packagePath: string;
     rootPath: string;
+    includeFromProjectRoot?: string[];
   }) {
     const packageConfig: TPackageConfig = {
       name,
@@ -44,6 +60,7 @@ export class PackageFileGenerator {
       version: version ? version : NEW_PACKAGE_INITIAL_VERSION,
       path: packagePath.replace(rootPath, ''),
       date: new Date().toUTCString(),
+      includeFromProjectRoot,
     };
 
     const fileContents = JSON.stringify(packageConfig, null, 2);

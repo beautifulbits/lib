@@ -7,46 +7,51 @@ import { RemoteLibrary } from './remote-library.js';
 import { InteractiveCli } from './interactive-cli/interactive-cli.js';
 import { PackageFileGenerator } from './package-file-generator.js';
 import { PackageDiffing } from './package-diffing.js';
-
-const remoteLibraryPath = `/Users/Nathaniel/Code/shared-lib`;
-const libDir = `/src/lib/`;
+import { GetConfig } from './get-config.js';
 
 (async () => {
-  const packageFileGenerator = new PackageFileGenerator({
-    verbose: false,
-  });
+  const getConfig = new GetConfig();
+  const config = await getConfig.load();
 
-  const remoteLibrary = new RemoteLibrary();
+  if (config) {
+    const { remoteLibraryPath, localLibraryPath } = config;
 
-  const localLibrary = new LocalLibrary();
+    const packageFileGenerator = new PackageFileGenerator({
+      verbose: false,
+    });
 
-  const packageDiffing = new PackageDiffing();
+    const remoteLibrary = new RemoteLibrary();
 
-  remoteLibrary.init({
-    path: remoteLibraryPath,
-    packageFileGenerator,
-    verbose: false,
-    localLibrary,
-  });
+    const localLibrary = new LocalLibrary();
 
-  localLibrary.init({
-    localLibraryDirectory: libDir,
-    verbose: false,
-    packageFileGenerator,
-    remoteLibrary,
-  });
+    const packageDiffing = new PackageDiffing();
 
-  packageDiffing.init({
-    localLibrary,
-    remoteLibrary,
-  });
+    remoteLibrary.init({
+      path: remoteLibraryPath,
+      packageFileGenerator,
+      verbose: false,
+      localLibrary,
+    });
 
-  const interactiveCli = new InteractiveCli({
-    verbose: false,
-    localLibrary,
-    remoteLibrary,
-    packageDiffing,
-  });
+    localLibrary.init({
+      localLibraryDirectory: localLibraryPath,
+      verbose: false,
+      packageFileGenerator,
+      remoteLibrary,
+    });
 
-  interactiveCli.init();
+    packageDiffing.init({
+      localLibrary,
+      remoteLibrary,
+    });
+
+    const interactiveCli = new InteractiveCli({
+      verbose: false,
+      localLibrary,
+      remoteLibrary,
+      packageDiffing,
+    });
+
+    interactiveCli.init();
+  }
 })();

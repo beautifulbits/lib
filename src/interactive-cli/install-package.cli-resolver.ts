@@ -7,7 +7,6 @@ import { RemoteLibrary } from '../remote-library.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
 import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
 import { MainCommandsCliResolver } from './main-commands.cli-resolver.js';
-import consola from 'consola';
 
 /* ================================ INTERFACE =============================== */
 interface IInstallPackageCliResolverInitFn {
@@ -48,7 +47,7 @@ export class InstallPackageCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectRemoteLibraryPrompt();
+      await this.mainCommandsCliPrompt.selectRemoteLibraryPrompt();
 
     await selectPrompt
       .run()
@@ -57,15 +56,15 @@ export class InstallPackageCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
-            this.resolveSelectPackagePrompt();
+            await this.resolveSelectPackagePrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
-            this.resolveSelectCollectionPrompt(answer);
+            await this.resolveSelectCollectionPrompt(answer);
         }
       })
       .catch(promptErrorHandler);
@@ -76,7 +75,7 @@ export class InstallPackageCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectRemoteCollectionPrompt(
+      await this.mainCommandsCliPrompt.selectRemoteCollectionPrompt(
         selectedLibrary,
       );
 
@@ -87,11 +86,11 @@ export class InstallPackageCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
-            this.resolveSelectPackagePrompt(selectedLibrary);
+            await this.resolveSelectPackagePrompt(selectedLibrary);
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
@@ -109,7 +108,7 @@ export class InstallPackageCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectRemotePackagePrompt(
+      await this.mainCommandsCliPrompt.selectRemotePackagePrompt(
         selectedLibrary,
         selectedCollection,
       );
@@ -123,7 +122,7 @@ export class InstallPackageCliResolver {
 
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
@@ -134,7 +133,7 @@ export class InstallPackageCliResolver {
               packageName: answer,
               version: latestRemoteVersion,
             });
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
         }
       })
       .catch(promptErrorHandler);
@@ -144,7 +143,7 @@ export class InstallPackageCliResolver {
   async resolveUpdateTypePrompt(packageName: string) {
     if (!this.mainCommandsCliPrompt) return;
 
-    const selectPrompt = this.mainCommandsCliPrompt.getSelectUpdateTypePrompt();
+    const selectPrompt = this.mainCommandsCliPrompt.selectUpdateTypePrompt();
 
     await selectPrompt.run().then(async (answer: VERSION_UPDATE_TYPES) => {
       if (!this.mainCommandsCliResolver) return;
@@ -152,11 +151,11 @@ export class InstallPackageCliResolver {
 
       switch (answer) {
         case INTERACTIVE_CLI_COMMANDS.exit:
-          this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+          await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
           break;
         default:
           await this.localLibrary.publishPackage(packageName, answer);
-          this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+          await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
       }
     });
   }

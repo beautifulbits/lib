@@ -1,16 +1,17 @@
-import { INTERACTIVE_CLI_COMMANDS, UNPUBLISHED_VERSION, } from '../helpers/constants.js';
+import { INTERACTIVE_CLI_COMMANDS, } from '../helpers/constants.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
 /* ========================================================================== */
-/*                       PACKAGE PUBLISHING CLI RESOLVER                      */
+/*                        INSTALL PACKAGE CLI RESOLVER                        */
 /* ========================================================================== */
-export class PackagePublishingCliResolver {
+export class PackageDiffingCliResolver {
     /* ------------------------------------------------------------------------ */
-    init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, mainCommandsCliResolver, }) {
+    init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, mainCommandsCliResolver, packageDiffing, }) {
         this.verbose = verbose;
         this.localLibrary = localLibrary;
         this.remoteLibrary = remoteLibrary;
         this.mainCommandsCliPrompt = mainCommandsCliPrompt;
         this.mainCommandsCliResolver = mainCommandsCliResolver;
+        this.packageDiffing = packageDiffing;
     }
     /* ------------------------------------------------------------------------ */
     async resolveSelectLibraryPrompt() {
@@ -70,28 +71,24 @@ export class PackagePublishingCliResolver {
                 return;
             if (!this.localLibrary)
                 return;
+            if (!this.remoteLibrary)
+                return;
             switch (answer) {
                 case INTERACTIVE_CLI_COMMANDS.exit:
                     await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
-                    const installedVersion = await this.localLibrary.getInstalledPackageVersion(answer);
-                    if (installedVersion === UNPUBLISHED_VERSION) {
-                        await this.localLibrary.publishPackage(answer);
-                        await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
-                    }
-                    else {
-                        await this.resolveUpdateTypePrompt(answer);
-                    }
+                    await this.resolveSelectVersionPrompt(answer);
+                    break;
             }
         })
             .catch(promptErrorHandler);
     }
     /* ------------------------------------------------------------------------ */
-    async resolveUpdateTypePrompt(packageName) {
+    async resolveSelectVersionPrompt(packageName) {
         if (!this.mainCommandsCliPrompt)
             return;
-        const selectPrompt = this.mainCommandsCliPrompt.selectUpdateTypePrompt();
+        const selectPrompt = await this.mainCommandsCliPrompt.selectRemotePackageVersionPrompt(packageName);
         await selectPrompt.run().then(async (answer) => {
             if (!this.mainCommandsCliResolver)
                 return;
@@ -102,10 +99,10 @@ export class PackagePublishingCliResolver {
                     await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
                     break;
                 default:
-                    await this.localLibrary.publishPackage(packageName, answer);
+                    await this.packageDiffing?.diffWithRemotePackage(packageName, answer);
                     await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             }
         });
     }
 }
-//# sourceMappingURL=package-publishing.cli-resolver.js.map
+//# sourceMappingURL=package-diffing.cli-resolver.js.map

@@ -6,38 +6,52 @@ import { LocalLibrary } from './local-library.js';
 import { RemoteLibrary } from './remote-library.js';
 import { InteractiveCli } from './interactive-cli/interactive-cli.js';
 import { PackageFileGenerator } from './package-file-generator.js';
-
-const remoteLibraryPath = `/Users/Nathaniel/Code/shared-lib`;
-const libDir = `/src/lib/`;
+import { PackageDiffing } from './package-diffing.js';
+import { GetConfig } from './get-config.js';
 
 (async () => {
-  const packageFileGenerator = new PackageFileGenerator({
-    verbose: false,
-  });
+  const getConfig = new GetConfig();
+  const config = await getConfig.load();
 
-  const remoteLibrary = new RemoteLibrary();
+  if (config) {
+    const { remoteLibraryPath, localLibraryPath } = config;
 
-  const localLibrary = new LocalLibrary();
+    const packageFileGenerator = new PackageFileGenerator({
+      verbose: false,
+    });
 
-  remoteLibrary.init({
-    path: remoteLibraryPath,
-    packageFileGenerator,
-    verbose: false,
-    localLibrary,
-  });
+    const remoteLibrary = new RemoteLibrary();
 
-  localLibrary.init({
-    localLibraryDirectory: libDir,
-    verbose: false,
-    packageFileGenerator,
-    remoteLibrary,
-  });
+    const localLibrary = new LocalLibrary();
 
-  const interactiveCli = new InteractiveCli({
-    verbose: false,
-    localLibrary,
-    remoteLibrary,
-  });
+    const packageDiffing = new PackageDiffing();
 
-  interactiveCli.init();
+    remoteLibrary.init({
+      path: remoteLibraryPath,
+      packageFileGenerator,
+      verbose: false,
+      localLibrary,
+    });
+
+    localLibrary.init({
+      localLibraryDirectory: localLibraryPath,
+      verbose: false,
+      packageFileGenerator,
+      remoteLibrary,
+    });
+
+    packageDiffing.init({
+      localLibrary,
+      remoteLibrary,
+    });
+
+    const interactiveCli = new InteractiveCli({
+      verbose: false,
+      localLibrary,
+      remoteLibrary,
+      packageDiffing,
+    });
+
+    interactiveCli.init();
+  }
 })();

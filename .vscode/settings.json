@@ -1,5 +1,11 @@
 {
-  "cSpell.words": ["beautifulbits", "consola", "Fullname", "kebabcase"],
+  "cSpell.words": [
+    "beautifulbits",
+    "consola",
+    "Fullname",
+    "kebabcase",
+    "sharedlib"
+  ],
   "search.exclude": {
     "**/node_modules": true,
     "**/build": true

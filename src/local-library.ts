@@ -11,11 +11,11 @@ import {
 import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
 import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 import { PackageFileGenerator } from './package-file-generator.js';
-import { RemoteLibrary } from './remote-library';
-import { TReaddirFileExtended } from './@types/readdir-file.js';
+import { RemoteLibrary } from './remote-library.js';
+import { TReaddirFileExtended } from './@types/readdir-file';
 import { TPackageMetadata } from './@types/package-metadata';
-import { TPackageConfig } from './@types/package-config.js';
-import { TPackagesCatalog } from './@types/packages-catalog.js';
+import { TPackageConfig } from './@types/package-config';
+import { TPackagesCatalog } from './@types/packages-catalog';
 
 /* ================================ INTERFACE =============================== */
 interface ILocalLibraryInitFn {
@@ -71,6 +71,7 @@ export class LocalLibrary {
       }
 
       this.libConfigFiles = await recursiveReaddir.list(this.libPath, {
+        recursive: true,
         ignoreFolders: true,
         extensions: true,
         readContent: true,
@@ -129,19 +130,19 @@ export class LocalLibrary {
   /* =========================== LISTING PACKAGES =========================== */
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledLibraries() {
+  public async getInstalledLibraries() {
     await this.getInstalledPackagesCatalog();
     return Object.keys(this.packagesCatalog);
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledCollections(selectedLibrary: string) {
+  public async getInstalledCollections(selectedLibrary: string) {
     await this.getInstalledPackagesCatalog();
     return Object.keys(this.packagesCatalog[selectedLibrary]);
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledPackages(
+  public async getInstalledPackages(
     selectedLibrary?: string,
     selectedCollection?: string,
   ) {
@@ -154,7 +155,7 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async showInstalledPackagesAsTable(
+  public async showInstalledPackagesAsTable(
     selectedLibrary?: string,
     selectedCollection?: string,
     selectedPackage?: string,
@@ -171,7 +172,7 @@ export class LocalLibrary {
   /* ======================== GETTING PACKAGE DETAILS ======================= */
 
   /* ------------------------------------------------------------------------ */
-  async findPackageMetadata(
+  private async findPackageMetadata(
     selectedPackage: string,
   ): Promise<TPackageMetadata | undefined> {
     let packageMetadata;
@@ -212,7 +213,7 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async getInstalledPackageVersion(packageName: string) {
+  public async getInstalledPackageVersion(packageName: string) {
     const packageMetadata = await this.findPackageMetadata(packageName);
 
     if (packageMetadata?.config?.version) {
@@ -222,7 +223,7 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async grabPackageFilesAndMetadataForPublish(packageName: string): Promise<
+  public async grabPackageFilesAndMetadata(packageName: string): Promise<
     | {
         path: string;
         config: TPackageConfig;
@@ -233,17 +234,43 @@ export class LocalLibrary {
     const packageMetadata = await this.findPackageMetadata(packageName);
 
     if (packageMetadata?.path && packageMetadata?.config) {
-      const { path, config } = packageMetadata;
+      const { path: packagePath, config } = packageMetadata;
       try {
-        const files: TReaddirFileExtended[] = await recursiveReaddir.list(
-          path,
-          {
+        let files: TReaddirFileExtended[] = [];
+
+        if (
+          config.includeFromProjectRoot &&
+          Array.isArray(config.includeFromProjectRoot) &&
+          config.includeFromProjectRoot.length > 0
+        ) {
+          const fromProjectRootFiles = await recursiveReaddir.list(
+            this.cliWorkingDir,
+            {
+              ignoreFolders: true,
+              extensions: true,
+              readContent: true,
+              encoding: `utf8`,
+              include: [...config.includeFromProjectRoot],
+              exclude: ['node_modules'],
+            },
+          );
+
+          const packageConfigFile = await recursiveReaddir.list(packagePath, {
             ignoreFolders: true,
             extensions: true,
             readContent: true,
             encoding: `utf8`,
-          },
-        );
+          });
+
+          files = [...fromProjectRootFiles, ...packageConfigFile];
+        } else {
+          files = await recursiveReaddir.list(packagePath, {
+            ignoreFolders: true,
+            extensions: true,
+            readContent: true,
+            encoding: `utf8`,
+          });
+        }
 
         const packageFiles = files.map((file) => {
           return {
@@ -253,7 +280,7 @@ export class LocalLibrary {
         });
 
         return {
-          path,
+          path: packagePath,
           config,
           packageFiles,
         };
@@ -265,10 +292,10 @@ export class LocalLibrary {
     return undefined;
   }
 
-  /* =========================== UPDATING PACKAGES ========================== */
+  /* ========================== PUBLISHING PACKAGES ========================= */
 
   /* ------------------------------------------------------------------------ */
-  async updatePackageVersion(
+  private async updatePackageVersion(
     packageName: string,
     updateType?: VERSION_UPDATE_TYPES,
   ) {
@@ -331,7 +358,7 @@ export class LocalLibrary {
         const packageMetadata = await this.findPackageMetadata(packageName);
         if (packageMetadata?.config && packageMetadata?.path) {
           const { config, path } = packageMetadata;
-          const { name, library, collection } = config;
+          const { name, library, collection, includeFromProjectRoot } = config;
           this.packageFileGenerator.generateLocalConfigFile({
             name,
             library,
@@ -339,6 +366,7 @@ export class LocalLibrary {
             version: newVersion,
             packagePath: path,
             rootPath: this.cliWorkingDir,
+            includeFromProjectRoot,
           });
           return true;
         } else {
@@ -358,7 +386,10 @@ export class LocalLibrary {
   }
 
   /* ------------------------------------------------------------------------ */
-  async publishPackage(packageName: string, updateType?: VERSION_UPDATE_TYPES) {
+  public async publishPackage(
+    packageName: string,
+    updateType?: VERSION_UPDATE_TYPES,
+  ) {
     if (!this.remoteLibrary) return;
 
     const isUpdateSuccess = await this.updatePackageVersion(
@@ -367,8 +398,9 @@ export class LocalLibrary {
     );
 
     if (isUpdateSuccess) {
-      const packagesFilesAndMetadata =
-        await this.grabPackageFilesAndMetadataForPublish(packageName);
+      const packagesFilesAndMetadata = await this.grabPackageFilesAndMetadata(
+        packageName,
+      );
 
       if (
         packagesFilesAndMetadata?.path &&
@@ -376,6 +408,7 @@ export class LocalLibrary {
         packagesFilesAndMetadata?.config
       ) {
         const { path, packageFiles, config } = packagesFilesAndMetadata;
+
         await this.remoteLibrary.publishPackage({
           name: packageName,
           version: config.version,
@@ -391,7 +424,7 @@ export class LocalLibrary {
   /* ========================== INSTALLING PACKAGES ========================= */
 
   /* ------------------------------------------------------------------------ */
-  async installPackage({
+  public async installPackage({
     packageFiles,
     packageName,
     packageRemotePath,
@@ -405,14 +438,31 @@ export class LocalLibrary {
     version: string;
   }) {
     const packageMetadata = await this.findPackageMetadata(packageName);
+    const remotePackageMetadata =
+      await this.remoteLibrary?.findPublishedPackageMetadata(
+        packageName,
+        version,
+      );
 
     if (packageMetadata?.config.version === version) {
       consola.warn(
         `Package ${packageName}@${version} is already installed in this project.`,
       );
     } else {
+      await this.packageFileGenerator?.deleteDirectory(
+        path.join(this.cliWorkingDir, packageLocalPath),
+      );
+
+      let packageWithFilesFromProjectRoot = false;
+      if (remotePackageMetadata && !Array.isArray(remotePackageMetadata)) {
+        if (remotePackageMetadata.config.includeFromProjectRoot) {
+          packageWithFilesFromProjectRoot = true;
+        }
+      }
+
       packageFiles.forEach(async (file) => {
         const {
+          name,
           path: filePath,
           fullname: fileFullname,
           data: fileContents,
@@ -420,11 +470,18 @@ export class LocalLibrary {
 
         if (!this.packageFileGenerator) return;
 
+        let basePath: string;
+        if (packageWithFilesFromProjectRoot && name !== LIB_CONFIG_FILENAME) {
+          basePath = path.join(this.cliWorkingDir);
+        } else {
+          basePath = path.join(this.cliWorkingDir, packageLocalPath);
+        }
+
         const directoryRelativePath = filePath.replace(packageRemotePath, '');
         const fileRelativePath = fileFullname.replace(packageRemotePath, '');
 
         await this.packageFileGenerator.generateFile({
-          basePath: path.join(this.cliWorkingDir, packageLocalPath),
+          basePath,
           directoryRelativePath,
           fileRelativePath,
           fileContents,

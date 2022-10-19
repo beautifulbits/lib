@@ -4,18 +4,25 @@ import { LocalPackagesListingCliResolver } from './local-packages-listing.cli-re
 import { PackagePublishingCliResolver } from './package-publishing.cli-resolver.js';
 import { RemotePackageLatestVersionCliResolver } from './remote-package-latest-version.cli-resolver.js';
 import { InstallPackageCliResolver } from './install-package.cli-resolver.js';
+import { PackageDiffingCliResolver } from './package-diffing.cli-resolver.js';
 /* ========================================================================== */
 /*                               INTERACTIVE CLI                              */
 /* ========================================================================== */
 export class InteractiveCli {
     /* ------------------------------------------------------------------------ */
-    constructor({ verbose = true, localLibrary, remoteLibrary, }) {
+    constructor({ verbose = true, localLibrary, remoteLibrary, packageDiffing, }) {
+        // Instantiate prompts
         const mainCommandsCliPrompt = new MainCommandsCliPrompt();
+        // Instantiate prompt resolvers
         const mainCommandsCliResolver = new MainCommandsCliResolver();
         const localPackagesListingCliResolver = new LocalPackagesListingCliResolver();
         const packagePublishingCliResolver = new PackagePublishingCliResolver();
         const remotePackageLatestVersionCliResolver = new RemotePackageLatestVersionCliResolver();
         const installPackageCliResolver = new InstallPackageCliResolver();
+        const packageDiffingCliResolver = new PackageDiffingCliResolver();
+        // Init class singletons
+        // Done this way since the classes have circular dependencies
+        // with each other
         mainCommandsCliPrompt.init({
             verbose,
             localLibrary,
@@ -30,6 +37,7 @@ export class InteractiveCli {
             packagePublishingCliResolver,
             remotePackageLatestVersionCliResolver,
             installPackageCliResolver,
+            packageDiffingCliResolver,
         });
         localPackagesListingCliResolver.init({
             verbose,
@@ -44,6 +52,14 @@ export class InteractiveCli {
             remoteLibrary,
             mainCommandsCliPrompt,
             mainCommandsCliResolver,
+        });
+        packageDiffingCliResolver.init({
+            verbose,
+            localLibrary,
+            remoteLibrary,
+            mainCommandsCliPrompt,
+            mainCommandsCliResolver,
+            packageDiffing,
         });
         installPackageCliResolver.init({
             verbose,

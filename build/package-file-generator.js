@@ -14,13 +14,27 @@ export class PackageFileGenerator {
         this.verbose = verbose;
     }
     /* ------------------------------------------------------------------------ */
-    async generateLocalConfigFile({ name, version, library, collection, packagePath, rootPath, }) {
+    async deleteDirectory(path) {
+        try {
+            await fs.promises.access(path);
+            await fs.promises.rm(path, { recursive: true });
+        }
+        catch {
+            if (this.verbose) {
+                consola.warn(`Didn't delete ${path}. Directory doesn't exists in project.`);
+            }
+        }
+    }
+    /* ------------------------------------------------------------------------ */
+    async generateLocalConfigFile({ name, version, library, collection, packagePath, rootPath, includeFromProjectRoot = [], }) {
         const packageConfig = {
             name,
             library,
             collection,
             version: version ? version : NEW_PACKAGE_INITIAL_VERSION,
             path: packagePath.replace(rootPath, ''),
+            date: new Date().toUTCString(),
+            includeFromProjectRoot,
         };
         const fileContents = JSON.stringify(packageConfig, null, 2);
         try {

@@ -1,8 +1,8 @@
 import { INTERACTIVE_CLI_COMMANDS } from '../helpers/constants.js';
 import { promptErrorHandler } from './interactive-cli.helpers.js';
-import { LocalLibrary } from '../local-library';
-import { RemoteLibrary } from '../remote-library';
-import { MainCommandsCliPrompt } from './main-commands.cli-prompt';
+import { LocalLibrary } from '../local-library.js';
+import { RemoteLibrary } from '../remote-library.js';
+import { MainCommandsCliPrompt } from './main-commands.cli-prompt.js';
 import { MainCommandsCliResolver } from './main-commands.cli-resolver.js';
 
 /* ================================ INTERFACE =============================== */
@@ -44,7 +44,7 @@ export class LocalPackagesListingCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLocalLibraryPrompt();
+      await this.mainCommandsCliPrompt.selectLocalLibraryPrompt();
 
     await selectPrompt
       .run()
@@ -55,15 +55,15 @@ export class LocalPackagesListingCliResolver {
         switch (answer) {
           case INTERACTIVE_CLI_COMMANDS.showAll:
             await this.localLibrary.showInstalledPackagesAsTable();
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
-            this.resolveSelectCollectionPrompt(answer);
+            await this.resolveSelectCollectionPrompt(answer);
         }
       })
       .catch(promptErrorHandler);
@@ -74,7 +74,7 @@ export class LocalPackagesListingCliResolver {
     if (!this.mainCommandsCliPrompt) return;
 
     const selectPrompt =
-      await this.mainCommandsCliPrompt.getSelectLocalCollectionPrompt(
+      await this.mainCommandsCliPrompt.selectLocalCollectionPrompt(
         selectedLibrary,
       );
 
@@ -89,11 +89,11 @@ export class LocalPackagesListingCliResolver {
             await this.localLibrary.showInstalledPackagesAsTable(
               selectedLibrary,
             );
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.exit:
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
             break;
 
           default:
@@ -101,7 +101,7 @@ export class LocalPackagesListingCliResolver {
               selectedLibrary,
               answer,
             );
-            this.mainCommandsCliResolver.resolveMainCommandsPrompt();
+            await this.mainCommandsCliResolver.resolveMainCommandsPrompt();
         }
       })
       .catch(promptErrorHandler);

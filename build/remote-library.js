@@ -3,6 +3,7 @@ import consola from 'consola';
 import path from 'path';
 import boxen from 'boxen';
 import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
+import { showVersionsAsTable } from './helpers/show-versions-as-table.js';
 import { LIB_CONFIG_FILENAME, UNPUBLISHED_VERSION, } from './helpers/constants.js';
 import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
 /* ========================================================================== */
@@ -156,7 +157,22 @@ export class RemoteLibrary {
         return latestVersion;
     }
     /* ------------------------------------------------------------------------ */
-    async grabPackageFilesAndMetadataInRemoteLibrary(packageName, selectedVersion) {
+    async getRemotePackageAllVersions(packageName, show = false) {
+        const packagesMetadata = await this.findPublishedPackageMetadata(packageName);
+        let versions = [];
+        if (packagesMetadata !== undefined && Array.isArray(packagesMetadata)) {
+            packagesMetadata.forEach((packageMetadata) => {
+                const packageVersion = packageMetadata.config.version;
+                versions.push(packageVersion);
+            });
+        }
+        if (show) {
+            showVersionsAsTable(packageName, versions);
+        }
+        return versions;
+    }
+    /* ------------------------------------------------------------------------ */
+    async grabPackageFilesAndMetadata(packageName, selectedVersion) {
         const packagesMetadata = await this.findPublishedPackageMetadata(packageName);
         if (packagesMetadata !== undefined && Array.isArray(packagesMetadata)) {
             const packageMetadata = packagesMetadata.find((test) => test.config.version === selectedVersion);
@@ -233,7 +249,7 @@ export class RemoteLibrary {
     async installPackage({ packageName, version, }) {
         if (!this.localLibrary)
             return;
-        const filesAndMetadata = await this.grabPackageFilesAndMetadataInRemoteLibrary(packageName, version);
+        const filesAndMetadata = await this.grabPackageFilesAndMetadata(packageName, version);
         if (filesAndMetadata) {
             const { packageFiles, path: packageRemotePath, config, } = filesAndMetadata;
             await this.localLibrary.installPackage({

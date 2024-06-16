@@ -208,7 +208,7 @@ export class RemoteLibrary {
     if (selectedVersion) {
       if (packageConfig === undefined && this.verbose) {
         consola.warn(
-          `Config for remote package ${selectedPackage}@${selectedVersion} not found.`,
+          `Config for remote package ${selectedPackage}@${selectedVersion} not found!`,
         );
       }
       return packageConfig;
@@ -414,6 +414,7 @@ export class RemoteLibrary {
         path: packageRemotePath,
         config,
       } = filesAndMetadata;
+
       await this.localLibrary.installPackage({
         packageFiles,
         packageName,

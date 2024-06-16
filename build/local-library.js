@@ -289,7 +289,7 @@ export class LocalLibrary {
     /* ------------------------------------------------------------------------ */
     async installPackage({ packageFiles, packageName, packageRemotePath, packageLocalPath, version, }) {
         const packageMetadata = await this.findPackageMetadata(packageName);
-        const remotePackageMetadata = await this.remoteLibrary?.findPublishedPackageMetadata(packageName, version);
+        const remotePackageMetadata = (await this.remoteLibrary?.findPublishedPackageMetadata(packageName, version));
         if (packageMetadata?.config.version === version) {
             consola.warn(`Package ${packageName}@${version} is already installed in this project.`);
         }
@@ -301,17 +301,11 @@ export class LocalLibrary {
                     packageWithFilesFromProjectRoot = true;
                 }
             }
-            packageFiles.forEach(async (file) => {
+            for (const file of packageFiles) {
                 const { name, path: filePath, fullname: fileFullname, data: fileContents, } = file;
                 if (!this.packageFileGenerator)
                     return;
-                let basePath;
-                if (packageWithFilesFromProjectRoot && name !== LIB_CONFIG_FILENAME) {
-                    basePath = path.join(this.cliWorkingDir);
-                }
-                else {
-                    basePath = path.join(this.cliWorkingDir, packageLocalPath);
-                }
+                const basePath = path.join(this.cliWorkingDir, packageLocalPath);
                 const directoryRelativePath = filePath.replace(packageRemotePath, '');
                 const fileRelativePath = fileFullname.replace(packageRemotePath, '');
                 await this.packageFileGenerator.generateFile({
@@ -320,7 +314,7 @@ export class LocalLibrary {
                     fileRelativePath,
                     fileContents,
                 });
-            });
+            }
             consola.log(`Package ${packageName}@${version} successfully installed!`);
         }
     }

@@ -439,10 +439,10 @@ export class LocalLibrary {
   }) {
     const packageMetadata = await this.findPackageMetadata(packageName);
     const remotePackageMetadata =
-      await this.remoteLibrary?.findPublishedPackageMetadata(
+      (await this.remoteLibrary?.findPublishedPackageMetadata(
         packageName,
         version,
-      );
+      )) as TPackageMetadata;
 
     if (packageMetadata?.config.version === version) {
       consola.warn(
@@ -460,7 +460,7 @@ export class LocalLibrary {
         }
       }
 
-      packageFiles.forEach(async (file) => {
+      for (const file of packageFiles) {
         const {
           name,
           path: filePath,
@@ -470,14 +470,10 @@ export class LocalLibrary {
 
         if (!this.packageFileGenerator) return;
 
-        let basePath: string;
-        if (packageWithFilesFromProjectRoot && name !== LIB_CONFIG_FILENAME) {
-          basePath = path.join(this.cliWorkingDir);
-        } else {
-          basePath = path.join(this.cliWorkingDir, packageLocalPath);
-        }
+        const basePath = path.join(this.cliWorkingDir, packageLocalPath);
 
         const directoryRelativePath = filePath.replace(packageRemotePath, '');
+
         const fileRelativePath = fileFullname.replace(packageRemotePath, '');
 
         await this.packageFileGenerator.generateFile({
@@ -486,7 +482,8 @@ export class LocalLibrary {
           fileRelativePath,
           fileContents,
         });
-      });
+      }
+
       consola.log(`Package ${packageName}@${version} successfully installed!`);
     }
   }

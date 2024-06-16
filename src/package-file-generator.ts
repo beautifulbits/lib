@@ -95,6 +95,7 @@ export class PackageFileGenerator {
   }) {
     const directoryPath = path.join(basePath, directoryRelativePath);
     const filePath = path.join(basePath, fileRelativePath);
+
     try {
       // First create directory for output file before attempting to
       // create the file

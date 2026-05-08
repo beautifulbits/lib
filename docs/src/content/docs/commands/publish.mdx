@@ -1,0 +1,64 @@
+---
+title: lib publish
+description: Snapshot a library at a new version into the centralized remote library.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`lib publish` takes a library at `src/lib/<name>/` and copies its files
+into the remote library folder (`<remoteLibraryPath>/<library>/<collection>/<name>/<version>/`),
+bumping the version in `lib.cfg`.
+
+Today, publish is exposed via the **interactive menu** — run `yarn lib`,
+choose `Publish package`, pick the library and the bump type (patch / minor
+/ major).
+
+## What happens
+
+1. The current `lib.cfg` is read for `name`, `library`, `collection`,
+   `version`.
+2. The version is bumped according to your selection.
+3. The library's files are copied into the remote library at
+   `<remoteLibraryPath>/<library>/<collection>/<name>/<version>/`.
+4. The new version is written back to `lib.cfg` in the source.
+5. The [usage registry](/commands/usage/) records the new
+   `currentVersion` for the library.
+
+## Where the files end up
+
+For a library with `name: schematic`, `library: frameworks`, `collection: react`,
+new version `2.5.1`:
+
+```
+<remoteLibraryPath>/
+  frameworks/
+    react/
+      schematic/
+        2.5.0/
+          ... (previous snapshot)
+        2.5.1/
+          ... (new snapshot)
+          lib.cfg
+```
+
+Old versions stay in place — the remote library is append-only.
+
+## Usage-registry side effect
+
+After a successful publish, `lib.libraries.<name>.currentVersion` is set to
+the new version in `usage.json`. This survives even if no consumer has
+installed it yet.
+
+<Aside type="caution">
+A publish doesn't affect consumers. After publishing a new version, you
+need to run `lib install <name>` (or update via the interactive menu) in
+each consumer to actually pick up the new code.
+
+`lib usage --library <name>` will show consumers' versions and flag those
+on older versions as stale.
+</Aside>
+
+## Future: non-interactive flag
+
+A non-interactive `lib publish <name> --patch | --minor | --major` is
+planned. For now, use the interactive menu.

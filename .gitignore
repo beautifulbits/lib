@@ -1,2 +1,6 @@
 node_modules
 .DS_Store
+build
+docs/dist
+docs/.astro
+__gen__

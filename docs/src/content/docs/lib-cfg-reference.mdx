@@ -1,0 +1,196 @@
+---
+title: lib.cfg reference
+description: Full schema for the manifest each library carries at its root.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`lib.cfg` is a JSON file at every library's root (e.g.
+`src/lib/schematic/lib.cfg`). It's the source of truth for what the library
+needs from a host project. The file is created by the publish flow with the
+existing fields and extended over time with the new host-wiring fields as
+needed.
+
+## Full shape
+
+```jsonc
+{
+  // === existing fields — set by publish flow ===
+  "name": "schematic",
+  "library": "frameworks",
+  "collection": "react",
+  "version": "2.5.0",
+  "path": "/src/lib/schematic",
+  "date": "Wed, 08 Apr 2026 10:56:51 GMT",
+  "includeFromProjectRoot": [],
+
+  // === new host-wiring fields (all optional, additive) ===
+  "description": "Schematic — schema-driven UI primitives.",
+  "alias": "@schematic",
+  "libRoot": "src/lib/schematic",
+  "stacks": ["next", "any"],
+
+  "dependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@storybook/react": "^10.0.0",
+    "astro": "^5.0.0",
+    "@astrojs/starlight": "^0.30.0"
+  },
+
+  "typescript": {
+    "decorators": false,
+    "requiredCompilerOptions": {}
+  },
+
+  "workflows": {
+    "test":      { "pattern": "src/lib/schematic" },
+    "storybook": { "configDir": "src/lib/schematic/.storybook", "port": 7104 },
+    "docs":      { "root": "src/lib/schematic/docs", "port": 7204 }
+  },
+
+  "ai": {
+    "claudeMd": "CLAUDE.md"
+  }
+}
+```
+
+## Existing fields (set by publish flow)
+
+| Field | Type | What it does |
+|---|---|---|
+| `name` | `string` | Library name. Used as the key for `test:<name>`, `storybook:<name>`, `docs:<name>` scripts. |
+| `library` | `string` | Top-level grouping in the remote library folder. e.g. `"frameworks"`. |
+| `collection` | `string` | Sub-grouping. e.g. `"react"`. |
+| `version` | `string` | Semver-ish. Bumped by `lib publish`. |
+| `path` | `string` | Where the library lives in a host (`/src/lib/<name>`). Set by publish. |
+| `date` | `string` | ISO date stamp for this version. |
+| `includeFromProjectRoot` | `string[]` | Optional globs of files outside `src/lib/<name>` that should travel with the library on publish (rare). |
+
+## New host-wiring fields (read by `lib sync`)
+
+All optional. Libraries opt in by populating only the fields they need.
+
+### `description`
+
+Human-readable one-liner. Shown in the host's root `CLAUDE.md` next to the
+library reference.
+
+### `alias`
+
+The path-alias prefix host code uses. Example: `"@schematic"`. The host's
+`tsconfig.json` and `next.config.*` and `jest.config.*` get patched to make
+this work:
+
+```ts
+import { Button } from '@schematic/foundations/controls/button';
+```
+
+If absent, alias-related patches no-op for this library.
+
+### `libRoot`
+
+Where the library lives in the host, e.g. `"src/lib/schematic"`. If omitted,
+it's derived from `path` (strip leading slash, normalize separators). Most
+libraries don't need to set it.
+
+### `stacks`
+
+Array of host kinds this library targets. Values: `'next'`, `'nest'`,
+`'any'`. Default: `['any']`.
+
+If a library declares `stacks: ['next']` and you sync against a NestJS host,
+the Next-specific patches (e.g. `turbopack.resolveAlias`) are skipped for
+that library.
+
+### `dependencies` / `devDependencies`
+
+npm deps the host needs. Same shape as a `package.json`'s `dependencies`
+object.
+
+`sync` adds these to the host's `package.json`. Existing entries are not
+overwritten — versions in the host stay as-is, with a warning if they
+differ.
+
+After `sync`, run `yarn install` to install any newly added deps.
+
+### `typescript.decorators`
+
+If `true`, `sync` ensures the host's `tsconfig.json` has
+`experimentalDecorators: true` and `emitDecoratorMetadata: true`. Idempotent.
+
+### `typescript.requiredCompilerOptions`
+
+A record of compilerOption keys this library needs in the host. `sync` adds
+keys not already set; if a key is set differently, it warns and leaves the
+host value alone.
+
+### `workflows.test`
+
+```jsonc
+"workflows": {
+  "test": { "pattern": "src/lib/schematic" }
+}
+```
+
+`sync` writes a `test:<name>` script:
+
+```jsonc
+"test:schematic": "jest --testPathPattern=src/lib/schematic"
+```
+
+### `workflows.storybook`
+
+```jsonc
+"workflows": {
+  "storybook": { "configDir": "src/lib/schematic/.storybook", "port": 7104 }
+}
+```
+
+`sync` writes a `storybook:<name>` script:
+
+```jsonc
+"storybook:schematic": "storybook dev -p 7104 --config-dir src/lib/schematic/.storybook"
+```
+
+### `workflows.docs`
+
+```jsonc
+"workflows": {
+  "docs": { "root": "src/lib/schematic/docs", "port": 7204 }
+}
+```
+
+`sync` writes a `docs:<name>` script:
+
+```jsonc
+"docs:schematic": "cd src/lib/schematic/docs && astro dev --port 7204"
+```
+
+<Aside type="caution">
+Pick distinct ports per library. Convention: 71xx for storybook, 72xx for docs.
+</Aside>
+
+### `ai.claudeMd`
+
+Path to this library's `CLAUDE.md`, relative to `libRoot`. If set and the
+file exists, `sync` registers the reference in the host's root `CLAUDE.md`
+under a managed `## Library AI Docs` section.
+
+## Field interactions
+
+- `alias` requires `libRoot` (or a derivable `path`) — without one of these,
+  `tsconfig.json`/`next.config`/`jest.config` patches are skipped.
+- `workflows.docs.port` and `workflows.storybook.port` should be unique
+  across libraries in a host.
+- Every workflow field is independent — a library can declare `docs` but no
+  `storybook`, or any combination.
+
+## Authoring a manifest
+
+For a brand-new library, `lib publish` writes the existing fields. To opt
+into host wiring, hand-edit the file once to add the new fields. Subsequent
+publishes will not touch them — they're additive, persisted by JSON.
+
+For a worked example, see [Adding a library](/cookbook/adding-a-library/).

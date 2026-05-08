@@ -1,0 +1,134 @@
+---
+title: Getting started
+description: Install @beautifulbits/lib in a project, configure sharedlib.cfg, and run your first sync.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+This page walks you from zero to a project that knows about its libraries and
+can run them in isolation. Targets both Next.js and NestJS hosts.
+
+## Prerequisites
+
+- Node ≥ 20.19 (required by Astro 5; the CLI itself works on Node ≥ 20)
+- `yarn`
+- A folder somewhere on disk that will act as your **remote library** — a
+  file-based "registry" where snapshotted library versions live. It can be
+  anywhere; e.g., `~/Code/shared-lib`.
+
+## Install in a host project
+
+<Steps>
+1. **Add the CLI as a devDependency.**
+
+   ```bash
+   yarn add -D @beautifulbits/lib
+   ```
+
+2. **Create `sharedlib.cfg` at the project root.**
+
+   ```jsonc
+   // <host>/sharedlib.cfg
+   {
+     "remoteLibraryPath": "/Users/you/Code/shared-lib",
+     "localLibraryPath": "/src/lib"
+   }
+   ```
+
+   - `remoteLibraryPath` — absolute path to your remote library folder.
+   - `localLibraryPath` — where libraries live inside this host. Always
+     `/src/lib` in practice.
+
+3. **Verify the CLI runs.**
+
+   ```bash
+   yarn lib --version
+   yarn lib --help
+   ```
+
+   With no arguments, `yarn lib` opens the interactive menu (publish,
+   install, diff, etc.). Sub-commands are also available as flags — see
+   [Commands](/commands/sync/).
+</Steps>
+
+## Add or sync a library
+
+You'll either be adding a brand-new library or pulling in an existing one
+from the remote library.
+
+### Pulling an existing library
+
+```bash
+yarn lib install schematic
+```
+
+(Or use the interactive menu — `yarn lib`, then choose "Install package".)
+
+This copies the latest snapshot of `schematic` into `src/lib/schematic/`. The
+library now exists on disk — but the host's `package.json`, `tsconfig.json`,
+and other configs don't yet know about it.
+
+### Wire it into the host
+
+```bash
+yarn lib sync
+```
+
+`sync` reads every library's `lib.cfg` and patches the host:
+
+- adds the library's declared `dependencies` / `devDependencies` to
+  `package.json`
+- adds path aliases to `tsconfig.json`
+- adds `turbopack.resolveAlias` entries to `next.config.*` (Next hosts only)
+- adds `moduleNameMapper` entries to `jest.config.*`
+- generates `test:<lib>`, `storybook:<lib>`, and `docs:<lib>` scripts in
+  `package.json`
+- registers the library's `CLAUDE.md` (if any) in the host's root `CLAUDE.md`
+- ensures default workflows (`yarn test`, `yarn storybook`) ignore
+  `src/lib/**`
+
+Then `yarn install` to install any new deps.
+
+<Aside type="tip">
+  `yarn lib sync --dry-run` previews changes without writing.
+  `yarn lib sync --check` exits non-zero if anything would change — useful in CI.
+</Aside>
+
+## What you can do now
+
+After a sync, with `schematic` installed:
+
+```bash
+# Use it in code
+import { Button } from '@schematic/foundations/controls/button';
+
+# Run only schematic's tests
+yarn test:schematic
+
+# Boot only schematic's Storybook (its own port)
+yarn storybook:schematic
+
+# Open schematic's docs site (if the library has one)
+yarn docs:schematic
+
+# Default workflows keep ignoring src/lib/**
+yarn test         # app tests only
+yarn storybook    # app stories only
+```
+
+## Inspect what's wired up
+
+```bash
+yarn lib usage                    # everything: projects + libraries
+yarn lib usage --library schematic
+yarn lib usage --project workbench-ui
+```
+
+## Next steps
+
+- Want to know what `lib.cfg` fields control what? See [`lib.cfg`
+  reference](/lib-cfg-reference/).
+- Adding your own library? See [Adding a
+  library](/cookbook/adding-a-library/).
+- Curious about what `sync` actually edits? See [Wiring into a
+  host](/cookbook/wiring-into-a-host/).

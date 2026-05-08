@@ -1,0 +1,152 @@
+---
+title: lib sync
+description: Apply each library's host-wiring declarations to the current project — idempotent, drift-safe, dry-runnable.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+`lib sync` reads every `lib.cfg` under `localLibraryPath` and patches the
+host project so each library can be consumed and run in isolation.
+
+```bash
+yarn lib sync [name]            # apply
+yarn lib sync --dry-run         # preview, write nothing
+yarn lib sync --check           # exit 1 if anything would change (CI)
+yarn lib sync schematic         # one library
+```
+
+## What it patches
+
+| File | Touched when | Per-library or tool-wide |
+|---|---|---|
+| `package.json` | `dependencies`, `devDependencies`, `workflows`, or `description` declared | per-library |
+| `tsconfig.json` | `alias` + `libRoot` declared, or `typescript.*` declared | per-library |
+| `next.config.*` | `alias` declared and host has `next.config.*` (Next stack) | per-library |
+| `jest.config.*` | `alias` declared and host has `jest.config.*` | per-library |
+| `jest.config.*` | always — the `default:test-ignore` block keeping `src/lib/**` out of `yarn test` | tool-wide |
+| `.storybook/main.*` | always — the `default:stories-ignore` block | tool-wide |
+| `CLAUDE.md` | `ai.claudeMd` declared | per-library |
+
+Per-library blocks are bracketed by markers like:
+
+```js
+// [LIB-WIRING:schematic:alias-START]
+'@schematic': './src/lib/schematic',
+// [LIB-WIRING:schematic:alias-END]
+```
+
+Re-runs only rewrite blocks whose generated content has changed. Hand-edits
+outside the marker blocks are preserved.
+
+## Modes
+
+<Tabs>
+<TabItem label="apply (default)">
+```bash
+yarn lib sync
+```
+
+Walks every library, runs every patcher, then runs tool-wide default
+patchers once. Writes changes to disk. Returns 0 on success.
+
+If anything was added, the closing line reminds you:
+
+```
+next: run `yarn install` if any deps were added
+```
+</TabItem>
+
+<TabItem label="--dry-run">
+```bash
+yarn lib sync --dry-run
+yarn lib sync -n
+```
+
+Same logic, but writes nothing. Useful before applying:
+
+```
+@beautifulbits/lib sync  →  /Users/you/Code/workbench-ui
+host: next (next.config.mjs, jest.config.cjs, .storybook/main.ts)
+mode: dry-run — no files will be written
+
+@schematic
+  package.json   + dep react@>=18
+                 + script "test:schematic"
+                 + script "storybook:schematic"
+  tsconfig.json  + path "@schematic" → ./src/lib/schematic
+  next.config    + alias '@schematic' → ./src/lib/schematic
+  jest.config    + moduleNameMapper for '@schematic'
+
+tool defaults  (applied once per sync)
+  jest defaults       + default test-ignore for src/lib/
+  storybook defaults  + default stories-ignore for src/lib/
+
+summary
+  1 library processed
+  ✓ would apply 7 changes
+
+dry-run: nothing was written.
+```
+</TabItem>
+
+<TabItem label="--check (CI)">
+```bash
+yarn lib sync --check
+echo $?  # 0 if up to date, 1 if drift
+```
+
+Implies `--dry-run`. Returns exit code 1 if any changes would be written.
+Designed for CI to fail when host configuration has drifted from the
+manifests.
+
+```yaml
+# .github/workflows/ci.yml
+- run: yarn lib sync --check
+```
+
+Warnings (e.g., the host is missing a `testPathIgnorePatterns: []` array)
+do not cause a non-zero exit. Only actual changes do.
+</TabItem>
+</Tabs>
+
+## Filtering to a single library
+
+```bash
+yarn lib sync schematic
+yarn lib sync schematic --dry-run
+```
+
+Runs library patchers for that library only. **Skips tool-wide defaults**
+since they aren't owned by any single library.
+
+## What sync does NOT do
+
+- It doesn't install npm deps. After adding deps via `lib sync`, run
+  `yarn install`.
+- It doesn't scaffold tooling the host hasn't adopted. If the host has no
+  `jest.config.*`, the jest patcher reports "no jest.config" as a reason and
+  skips. Same for storybook, next, etc.
+- It doesn't create a docs site. Each library carries its own `docs/` folder
+  (Starlight project) that travels with the library when synced.
+
+## When sync warns
+
+A `warn` indicates the host is missing structural configuration the patcher
+needs as an anchor — for example, a `moduleNameMapper: {}` block in
+`jest.config.cjs`. The patcher prints a one-line instruction explaining what
+to add, then leaves the file alone. After you add the empty block, re-run
+`sync` and the patcher will inject its content.
+
+<Aside type="tip">
+A run with only `warn` entries (no `add` / `update`) does not count as drift
+for `--check`. The command exits 0.
+</Aside>
+
+## Idempotency guarantees
+
+- Two consecutive `sync` runs against an unchanged manifest produce
+  identical output: the second run's summary is "host already up to date".
+- A `dry-run` followed by an `apply` (no other changes in between) writes
+  exactly the changes the dry-run reported.
+- Marker blocks are scoped per `(library, scope)` — adding a new library
+  never disturbs another library's blocks.

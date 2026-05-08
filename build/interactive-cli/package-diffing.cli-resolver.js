@@ -4,6 +4,12 @@ import { promptErrorHandler } from './interactive-cli.helpers.js';
 /*                        INSTALL PACKAGE CLI RESOLVER                        */
 /* ========================================================================== */
 export class PackageDiffingCliResolver {
+    verbose;
+    localLibrary;
+    remoteLibrary;
+    mainCommandsCliPrompt;
+    mainCommandsCliResolver;
+    packageDiffing;
     /* ------------------------------------------------------------------------ */
     init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, mainCommandsCliResolver, packageDiffing, }) {
         this.verbose = verbose;

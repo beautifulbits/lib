@@ -1,14 +1,13 @@
-import consolaGlobalInstance from 'consola';
-import fs from 'fs';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import boxen from 'boxen';
-import mkdirp from 'mkdirp';
 import consola from 'consola';
 import { LIB_CONFIG_FILENAME, NEW_PACKAGE_INITIAL_VERSION, } from './helpers/constants.js';
 /* ========================================================================== */
 /*                        PACKAGE CONFIG FILE GENERATOR                       */
 /* ========================================================================== */
 export class PackageFileGenerator {
+    verbose;
     /* ------------------------------------------------------------------------ */
     constructor({ verbose = false }) {
         this.verbose = verbose;
@@ -16,8 +15,8 @@ export class PackageFileGenerator {
     /* ------------------------------------------------------------------------ */
     async deleteDirectory(path) {
         try {
-            await fs.promises.access(path);
-            await fs.promises.rm(path, { recursive: true });
+            await fs.access(path);
+            await fs.rm(path, { recursive: true });
         }
         catch {
             if (this.verbose) {
@@ -39,13 +38,13 @@ export class PackageFileGenerator {
         const fileContents = JSON.stringify(packageConfig, null, 2);
         try {
             const configFilePath = path.join(packagePath, LIB_CONFIG_FILENAME);
-            await fs.promises.writeFile(configFilePath, fileContents);
+            await fs.writeFile(configFilePath, fileContents);
             if (this.verbose) {
                 consola.log(`Config file for package ${name} created: ${configFilePath}`);
             }
         }
         catch (writeFileError) {
-            consolaGlobalInstance.error(`Unable to create config file for ${name}:`, writeFileError);
+            consola.error(`Unable to create config file for ${name}:`, writeFileError);
         }
     }
     /* ------------------------------------------------------------------------ */
@@ -56,16 +55,16 @@ export class PackageFileGenerator {
             // First create directory for output file before attempting to
             // create the file
             try {
-                await fs.promises.access(directoryPath);
+                await fs.access(directoryPath);
             }
             catch {
-                await mkdirp(directoryPath);
+                await fs.mkdir(directoryPath, { recursive: true });
                 if (this.verbose) {
                     consola.log(`Directory created: ${directoryPath}`);
                 }
             }
             // Create the file
-            await fs.promises.writeFile(filePath, fileContents);
+            await fs.writeFile(filePath, fileContents);
             if (this.verbose) {
                 consola.log(boxen(fileContents, {
                     padding: 1,

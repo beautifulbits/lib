@@ -1,0 +1,82 @@
+---
+title: '@beautifulbits/lib'
+description: A shared-code manager for personal libraries — publish, install, and wire each library into a host project with one command.
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+`@beautifulbits/lib` is a CLI for managing a personal collection of source-level
+shared libraries. Libraries live as folders inside each consuming project's
+`src/lib/` directory; the tool publishes versioned snapshots of those folders
+to a centralized "remote library" on disk and installs them into other
+projects on demand. A separate `sync` command applies each library's host
+wiring (deps, path aliases, scripts, default-workflow exclusions) so a freshly
+synced library feels like a one-click install of an npm package — without the
+overhead of actually publishing to npm.
+
+## What it does
+
+<CardGrid>
+  <Card title="Synced source libraries" icon="document">
+    Each library is a folder under `src/lib/` carrying a small `lib.cfg`
+    manifest. `lib publish` snapshots a version into the central remote
+    library; `lib install` copies a snapshot into another project.
+  </Card>
+
+  <Card title="One-command host wiring" icon="setting">
+    `lib sync` reads every library's `lib.cfg` and patches the host project's
+    `package.json`, `tsconfig.json`, `next.config.*`, `jest.config.*`,
+    `.storybook/main.*`, and root `CLAUDE.md` so the library is consumable
+    via path aliases and runnable in isolation (its own test, storybook, and
+    docs scripts on dedicated ports).
+  </Card>
+
+  <Card title="Per-library isolation" icon="puzzle">
+    `yarn test:schematic` runs only schematic's tests.
+    `yarn storybook:tectonic` boots Tectonic's Storybook on its own port.
+    `yarn docs:synchronic` opens Synchronic's Starlight site. Default
+    workflows ignore `src/lib/**` so library validation never blocks app
+    work.
+  </Card>
+
+  <Card title="Centralized usage tracking" icon="information">
+    Every publish/install/sync updates a single `usage.json` in the remote
+    library. `lib usage` shows which projects have which libraries at which
+    versions, and flags stale consumers.
+  </Card>
+</CardGrid>
+
+## Why this exists
+
+Source-syncing across projects means a library's API shape is always the
+fresh code on disk — no version pinning, no transitive resolution, no
+publishing ceremony. But each consuming project still needs the library's
+deps installed, its path alias set up, and a way to run its tests/stories
+independently. Doing that by hand for every library in every project is
+tedious and error-prone.
+
+`@beautifulbits/lib` makes the manifest authoritative. Each library declares
+what it needs in `lib.cfg`; `lib sync` makes the host conform. Re-runnable,
+idempotent, drift-detecting.
+
+## Architecture principles
+
+- **Single host `node_modules`.** Libraries declare deps in `lib.cfg`; they
+  get installed in the host's `package.json`. No per-library `node_modules`.
+- **No `package.json` in synced libraries.** Standalone packages (this CLI
+  itself) keep theirs.
+- **Full per-library isolation, no portal.** Each library has its own
+  test/storybook/docs scripts on its own port. No "run all" commands.
+- **Library carries its workflow assets.** `docs/`, `.storybook/`, tests
+  travel with the library when synced.
+- **Host default workflows exclude library paths.** `yarn test`,
+  `yarn storybook` ignore `src/lib/**` via marker-managed config blocks.
+- **Idempotent + drift-safe.** `sync` re-runs are no-ops when nothing
+  changed; marker blocks isolate edits per library.
+
+## Where to next
+
+- New to `@beautifulbits/lib`? Read [Getting started](/getting-started/).
+- Looking for a manifest field? See [`lib.cfg` reference](/lib-cfg-reference/).
+- Need command details? Browse the [Commands](/commands/sync/) section.
+- Stuck on a workflow? Open the [Cookbook](/cookbook/adding-a-library/).

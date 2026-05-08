@@ -1,46 +1,35 @@
 #!/usr/bin/env node
-import sourceMapSupport from 'source-map-support';
-sourceMapSupport.install();
-import { LocalLibrary } from './local-library.js';
-import { RemoteLibrary } from './remote-library.js';
-import { InteractiveCli } from './interactive-cli/interactive-cli.js';
-import { PackageFileGenerator } from './package-file-generator.js';
-import { PackageDiffing } from './package-diffing.js';
-import { GetConfig } from './get-config.js';
-(async () => {
-    const getConfig = new GetConfig();
-    const config = await getConfig.load();
-    if (config) {
-        const { remoteLibraryPath, localLibraryPath } = config;
-        const packageFileGenerator = new PackageFileGenerator({
-            verbose: false,
-        });
-        const remoteLibrary = new RemoteLibrary();
-        const localLibrary = new LocalLibrary();
-        const packageDiffing = new PackageDiffing();
-        remoteLibrary.init({
-            path: remoteLibraryPath,
-            packageFileGenerator,
-            verbose: false,
-            localLibrary,
-        });
-        localLibrary.init({
-            localLibraryDirectory: localLibraryPath,
-            verbose: false,
-            packageFileGenerator,
-            remoteLibrary,
-        });
-        packageDiffing.init({
-            localLibrary,
-            remoteLibrary,
-        });
-        const interactiveCli = new InteractiveCli({
-            verbose: false,
-            localLibrary,
-            remoteLibrary,
-            packageDiffing,
-        });
-        interactiveCli.init();
-    }
-})();
+import { Builtins, Cli } from 'clipanion';
+import { CouplingsCommand } from './commands/couplings.cmd.js';
+import { DetectDepsCommand } from './commands/detect-deps.cmd.js';
+import { DocsCommand } from './commands/docs.cmd.js';
+import { InstallDepsCommand } from './commands/install-deps.cmd.js';
+import { InteractiveCommand } from './commands/interactive.cmd.js';
+import { LibInitCommand } from './commands/lib-init.cmd.js';
+import { ProjectInitCommand } from './commands/project-init.cmd.js';
+import { SyncCommand } from './commands/sync.cmd.js';
+import { UpgradeCfgCommand } from './commands/upgrade-cfg.cmd.js';
+import { UsageCommand } from './commands/usage.cmd.js';
+/* ========================================================================== */
+/*                                  CLI ENTRY                                 */
+/* ========================================================================== */
+const [, , ...args] = process.argv;
+const cli = new Cli({
+    binaryLabel: '@beautifulbits/lib',
+    binaryName: 'lib',
+    binaryVersion: '0.1.0',
+});
+cli.register(InteractiveCommand);
+cli.register(ProjectInitCommand);
+cli.register(LibInitCommand);
+cli.register(SyncCommand);
+cli.register(UsageCommand);
+cli.register(UpgradeCfgCommand);
+cli.register(DetectDepsCommand);
+cli.register(InstallDepsCommand);
+cli.register(CouplingsCommand);
+cli.register(DocsCommand);
+cli.register(Builtins.HelpCommand);
+cli.register(Builtins.VersionCommand);
+await cli.runExit(args);
 //# sourceMappingURL=exec.js.map

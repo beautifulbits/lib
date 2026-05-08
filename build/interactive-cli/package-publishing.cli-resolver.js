@@ -4,6 +4,11 @@ import { promptErrorHandler } from './interactive-cli.helpers.js';
 /*                       PACKAGE PUBLISHING CLI RESOLVER                      */
 /* ========================================================================== */
 export class PackagePublishingCliResolver {
+    verbose;
+    localLibrary;
+    remoteLibrary;
+    mainCommandsCliPrompt;
+    mainCommandsCliResolver;
     /* ------------------------------------------------------------------------ */
     init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, mainCommandsCliResolver, }) {
         this.verbose = verbose;

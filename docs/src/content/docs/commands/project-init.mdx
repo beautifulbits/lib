@@ -1,0 +1,63 @@
+---
+title: lib project-init
+description: Bootstrap a project to use @beautifulbits/lib — writes sharedlib.cfg and ensures src/lib/ exists.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`lib project-init` sets up the current project to use `@beautifulbits/lib`.
+Run this once per project before any other lib command.
+
+```bash
+yarn lib project-init --remote /Users/you/Code/shared-lib
+yarn lib project-init --remote /path/to/remote --local /lib
+yarn lib project-init --remote /path/to/remote --force
+```
+
+## What it does
+
+1. Validates that the current directory has a `package.json`.
+2. Validates that `--remote` exists and is a directory.
+3. Writes `sharedlib.cfg` at the project root:
+
+   ```jsonc
+   {
+     "remoteLibraryPath": "/Users/you/Code/shared-lib",
+     "localLibraryPath": "/src/lib"
+   }
+   ```
+
+4. Creates the local library directory (default: `src/lib/`) if missing.
+
+## Options
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--remote <path>` | (required) | Absolute path to the centralized remote library on disk. Must already exist. |
+| `--local <path>` | `/src/lib` | Project-relative path where libraries are synced into. The leading slash is decorative — it's always treated as relative to the project root. |
+| `--force` | `false` | Overwrite an existing `sharedlib.cfg`. Without this, the command refuses to clobber. |
+
+## Idempotency
+
+- A second run with the same flags refuses to overwrite `sharedlib.cfg`
+  unless `--force` is passed.
+- The `src/lib/` directory is created if absent and left alone if present.
+- No deps are added to the host's `package.json` — install
+  `@beautifulbits/lib` separately as a devDep.
+
+<Aside type="note">
+This command only writes config. It does not install npm deps. After
+running it, add `@beautifulbits/lib` to your devDependencies the normal way:
+
+```bash
+yarn add -D @beautifulbits/lib
+```
+</Aside>
+
+## After running
+
+Once the project is initialized, you can:
+
+- [`lib lib-init <name>`](/commands/lib-init/) — scaffold a brand-new library
+- `lib install <name>` — pull an existing library from the remote library
+- [`lib sync`](/commands/sync/) — wire libraries into host configs

@@ -1,0 +1,62 @@
+---
+title: lib install
+description: Copy a published library snapshot from the remote library into a host project.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`lib install` copies a previously [published](/commands/publish/) library
+snapshot from the remote library into the current host's `src/lib/<name>/`
+directory.
+
+Today, install is exposed via the **interactive menu** — run `yarn lib`,
+choose `Install package`, pick the library and version.
+
+## What happens
+
+1. The chosen library version's files are copied from
+   `<remoteLibraryPath>/<library>/<collection>/<name>/<version>/` into
+   `<host>/src/lib/<name>/`.
+2. Any existing `src/lib/<name>/` content is removed first — install is
+   destructive.
+3. The library's `lib.cfg` is included in the copy.
+4. The [usage registry](/commands/usage/) records that this project has
+   that library at that version.
+
+## After install
+
+The library files exist on disk, but the host configs don't know about them
+yet. Run [`yarn lib sync`](/commands/sync/) to:
+
+- add the library's dependencies to `package.json`
+- add the path alias to `tsconfig.json` / `next.config.*` / `jest.config.*`
+- add `test:<lib>` / `storybook:<lib>` / `docs:<lib>` scripts
+- register the library's `CLAUDE.md` (if any)
+
+Then `yarn install` for any new deps.
+
+<Aside type="tip">
+The full flow for adopting a library in a new project is:
+
+```bash
+yarn lib install <name>   # copy files
+yarn lib sync             # wire host configs
+yarn install              # install any new deps
+```
+</Aside>
+
+## Usage-registry side effect
+
+After a successful install, `usage.json` records:
+
+- `projects.<projectName>.libraries.<libName>` with `version` and
+  `installedAt` timestamp
+- `projects.<projectName>.path` and `lastSeen` updated
+- `libraries.<libName>.consumers` includes this project
+
+Project name is read from the host's `package.json#name`.
+
+## Future: non-interactive flag
+
+A non-interactive `lib install <name> [--version X]` is planned. For now,
+use the interactive menu.

@@ -1,0 +1,206 @@
+---
+title: Wiring into a host
+description: What lib sync actually edits, where the marker blocks live, and how to debug drift.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+This page details what `lib sync` writes into a host project. Useful when
+debugging drift, reading diffs in PRs, or onboarding a new repo.
+
+## Per-library marker blocks
+
+Every per-library edit lives between bracket comments:
+
+```
+// [LIB-WIRING:<libName>:<scope>-START]
+... generated content ...
+// [LIB-WIRING:<libName>:<scope>-END]
+```
+
+`scope` distinguishes different blocks for the same library (e.g., `alias`
+vs `mapper`). `default` is reserved for tool-wide blocks (test/storybook
+exclusions).
+
+**Don't hand-edit inside the markers** — your changes will be overwritten
+on the next `sync`. **Hand-edits outside the markers are preserved.**
+
+## File-by-file
+
+<Tabs>
+<TabItem label="package.json">
+**Direct JSON edit, no markers** (JSON doesn't support comments).
+
+`sync` adds keys to `dependencies`, `devDependencies`, and `scripts`. It
+never overwrites existing values:
+
+- A new dep is added at the manifest's declared version.
+- An existing dep at a different version is left alone with a warning.
+- A new script (`test:<lib>`, `storybook:<lib>`, `docs:<lib>`) is added.
+- An existing script of the same name with the same value is skipped.
+- An existing script with a different value is left alone with a warning.
+
+After deps are added, run `yarn install`.
+</TabItem>
+
+<TabItem label="tsconfig.json">
+**Direct JSON edit, no markers.**
+
+For each library with `alias` + `libRoot`:
+
+```jsonc
+{
+  "compilerOptions": {
+    "paths": {
+      "@schematic":   ["./src/lib/schematic"],
+      "@schematic/*": ["./src/lib/schematic/*"]
+    }
+  }
+}
+```
+
+For each library with `typescript.decorators: true`:
+
+```jsonc
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
+Existing different values are left alone with a warning.
+</TabItem>
+
+<TabItem label="next.config.*">
+**Marker block, per library.** Inside `turbopack.resolveAlias: { ... }`:
+
+```js
+turbopack: {
+  resolveAlias: {
+    // [LIB-WIRING:schematic:alias-START]
+    '@schematic': './src/lib/schematic',
+    // [LIB-WIRING:schematic:alias-END]
+    // ... other host aliases left alone
+  },
+}
+```
+
+If `turbopack.resolveAlias` doesn't exist in the file, sync warns and tells
+you to add an empty `turbopack: { resolveAlias: {} }` block.
+</TabItem>
+
+<TabItem label="jest.config.*">
+**Per-library marker block** inside `moduleNameMapper`:
+
+```js
+moduleNameMapper: {
+  // [LIB-WIRING:schematic:mapper-START]
+  '^@schematic/(.*)$': '<rootDir>/src/lib/schematic/$1',
+  '^@schematic$': '<rootDir>/src/lib/schematic',
+  // [LIB-WIRING:schematic:mapper-END]
+}
+```
+
+**Tool-wide default block** inside `testPathIgnorePatterns`:
+
+```js
+testPathIgnorePatterns: [
+  // [LIB-WIRING:default:test-ignore-START]
+  '<rootDir>/src/lib/',
+  // [LIB-WIRING:default:test-ignore-END]
+]
+```
+
+This keeps `src/lib/**` out of the default `yarn test`. Per-library
+`test:<lib>` scripts use `--testPathPattern` to bypass the ignore.
+</TabItem>
+
+<TabItem label=".storybook/main.*">
+**Tool-wide marker block** inside `stories: [ ... ]`:
+
+```ts
+stories: [
+  // [LIB-WIRING:default:stories-ignore-START]
+  '!../src/lib/**',
+  // [LIB-WIRING:default:stories-ignore-END]
+  '../src/**/*.stories.@(js|jsx|ts|tsx)',
+]
+```
+
+Per-library Storybooks are launched via `storybook:<lib>` scripts that
+point `--config-dir` at each library's own `.storybook/`, so they don't go
+through this config.
+</TabItem>
+
+<TabItem label="CLAUDE.md">
+**Section + per-library marker blocks.** Top of file:
+
+```md
+## Library AI Docs
+
+// [LIB-WIRING:schematic:claudemd-START]
+- [@schematic](./src/lib/schematic/CLAUDE.md) — Schematic — schema-driven UI primitives.
+// [LIB-WIRING:schematic:claudemd-END]
+```
+
+If the host has no `CLAUDE.md`, sync creates one with this section. If the
+section exists already, the markers are inserted under the heading.
+</TabItem>
+</Tabs>
+
+## Debugging drift
+
+If `yarn lib sync --check` exits 1 in CI, somebody changed a `lib.cfg`
+without re-running `yarn lib sync` afterwards. Fix it:
+
+```bash
+yarn lib sync           # apply
+yarn install            # if any deps were added
+git diff                # confirm what changed
+```
+
+If the diff looks clean, commit. Re-run `--check` to confirm 0 exit.
+
+## Removing a library
+
+There's no `lib uninstall` command yet. The manual steps:
+
+1. Remove the library folder from `src/lib/<name>/`.
+2. Remove the marker blocks (search for `LIB-WIRING:<name>:`) from host
+   configs.
+3. Remove the library's `dependencies`, `devDependencies`, and scripts
+   (`test:<name>`, `storybook:<name>`, `docs:<name>`) from
+   `package.json`.
+4. Run `yarn install` to drop unused deps from the lockfile.
+5. Update `usage.json` manually (or wait for the planned `lib uninstall`
+   command).
+
+<Aside type="tip">
+The `removeMarkerBlock` helper in `host-sync/marker-block.ts` is the same
+function `lib uninstall` will use when implemented. You can spot every block
+to remove with:
+
+```bash
+grep -rn 'LIB-WIRING:<name>:' .
+```
+</Aside>
+
+## When sync warns about missing structure
+
+Sync will refuse to insert a marker block into a config file that doesn't
+have the right anchor. Examples:
+
+- `jest.config.cjs` lacks a `testPathIgnorePatterns: []` array → the
+  default ignore can't be inserted.
+- `next.config.mjs` lacks `turbopack: { resolveAlias: {} }` → per-library
+  aliases can't be inserted.
+- `.storybook/main.ts` lacks `stories: [ ... ]` → the default
+  stories-ignore can't be inserted.
+
+In each case the warning tells you exactly what to add. Once you do, the
+next `sync` run will land the marker block.
+
+This conservative behavior is intentional — sync never adds top-level
+configuration to a file that hasn't opted in to the relevant tool.

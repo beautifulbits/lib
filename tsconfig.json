@@ -1,18 +1,27 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "rootDir": "./src",
     "outDir": "./build",
-    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2022"],
+    "types": ["node"],
+
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "baseUrl": ".",
-    "paths": {
-      "src": ["./src"]
-    },
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+
     "sourceMap": true,
-    "moduleResolution": "node"
-  }
+    "declaration": true,
+    "declarationMap": true,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "build", "__gen__", "docs"]
 }

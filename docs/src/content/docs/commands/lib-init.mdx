@@ -1,0 +1,124 @@
+---
+title: lib lib-init
+description: Scaffold a brand-new shared library at src/lib/<name>/ with a starter lib.cfg and index.ts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`lib lib-init <name>` creates a new library directory under
+`<localLibraryPath>/<name>/` with a starter `lib.cfg` and `index.ts`.
+
+```bash
+yarn lib lib-init mylib
+yarn lib lib-init mylib --library frameworks --collection react
+yarn lib lib-init mylib --alias @mylib --description "Schema utilities"
+yarn lib lib-init mylib --with-claude-md
+```
+
+## What it does
+
+1. Validates the current project has a `sharedlib.cfg` (run [`lib project-init`](/commands/project-init/) first if not).
+2. Validates the name is `kebab-case` (lowercase letters, digits, dashes).
+3. Refuses if `src/lib/<name>/` already exists (use `--force` to clobber).
+4. Creates the directory and writes:
+   - `lib.cfg` with both legacy publish-flow fields and new host-wiring
+     fields (alias, libRoot, stacks, etc.)
+   - `index.ts` — a stub `export {}` so the library is importable
+     immediately
+   - `CLAUDE.md` (only with `--with-claude-md`)
+
+## Options
+
+| Flag | Default | Notes |
+|---|---|---|
+| `<name>` | (required) | Library name. Becomes the alias suffix and the directory name. Must be `kebab-case`. |
+| `--description <text>` | `<Capitalized> — TODO describe...` | Human-readable one-liner. Lands in `lib.cfg.description` and the CLAUDE.md placeholder if `--with-claude-md`. |
+| `--alias <prefix>` | `@<name>` | Path-alias prefix. Override only if you want something other than `@<name>`. |
+| `--library <kind>` | `frameworks` | Top-level grouping in the remote library. |
+| `--collection <kind>` | `general` | Sub-grouping (e.g., `react`, `node`, `cli`). |
+| `--with-claude-md` | `false` | Also create `<name>/CLAUDE.md` and reference it via `ai.claudeMd`. |
+| `--force` | `false` | Remove and recreate the library directory. **Destructive** — wipes any existing files. |
+
+## What gets written
+
+For `lib lib-init mylib --description "Schema utilities" --with-claude-md`:
+
+```
+src/lib/mylib/
+  lib.cfg
+  index.ts
+  CLAUDE.md
+```
+
+`lib.cfg` looks like:
+
+```jsonc
+{
+  "name": "mylib",
+  "library": "frameworks",
+  "collection": "general",
+  "version": "0.1.0",
+  "path": "/src/lib/mylib",
+  "date": "Wed, 08 Apr 2026 10:56:51 GMT",
+  "includeFromProjectRoot": [],
+
+  "description": "Schema utilities",
+  "alias": "@mylib",
+  "libRoot": "src/lib/mylib",
+  "stacks": ["any"],
+
+  "dependencies": {},
+  "devDependencies": {},
+
+  "typescript": { "decorators": false },
+
+  "ai": { "claudeMd": "CLAUDE.md" }
+}
+```
+
+`workflows` (test/storybook/docs) are intentionally **not** scaffolded —
+add them by hand once you know what tooling the library needs. See
+[`lib.cfg` reference](/lib-cfg-reference/#workflows) for the field shapes.
+
+`index.ts`:
+
+```ts
+/* @mylib — public API entry point. */
+
+export {};
+```
+
+<Aside type="note">
+The library is created with version `0.1.0` and no published snapshot yet.
+Use the interactive menu (`yarn lib` → `Publish package`) to push the first
+snapshot to the remote library when you're ready.
+</Aside>
+
+## After running
+
+Typical next steps:
+
+```bash
+# 1. Wire the alias into host configs
+yarn lib sync
+
+# 2. Edit lib.cfg to add deps / workflows / typescript options
+$EDITOR src/lib/mylib/lib.cfg
+
+# 3. Re-sync to apply any new declarations
+yarn lib sync
+yarn install   # pick up any new deps
+
+# 4. (Eventually) publish the first snapshot
+yarn lib   # → Publish package → mylib → patch
+```
+
+## Why workflows are not scaffolded
+
+Test, storybook, and docs ports need to be unique per library across all
+hosts you sync into. Picking them at scaffold time would either create
+collisions or guess defaults you'd have to override anyway. Easier to leave
+them off and add them only when you actually wire up the tooling.
+
+For the convention I use — `71xx` for storybook, `72xx` for docs — see
+[`lib.cfg` reference](/lib-cfg-reference/#workflowsstorybook).

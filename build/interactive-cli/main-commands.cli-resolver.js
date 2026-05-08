@@ -4,8 +4,28 @@ import { promptErrorHandler } from './interactive-cli.helpers.js';
 /*                         MAIN COMMANDS CLI RESOLVER                         */
 /* ========================================================================== */
 export class MainCommandsCliResolver {
+    verbose;
+    localLibrary;
+    remoteLibrary;
+    mainCommandsCliPrompt;
+    remotePackageLatestVersionCliResolver;
+    packagePublishingCliResolver;
+    localPackagesListingCliResolver;
+    installPackageCliResolver;
+    packageDiffingCliResolver;
+    initProjectCliResolver;
+    initLibraryCliResolver;
+    syncHostCliResolver;
+    showUsageCliResolver;
+    openDocsCliResolver;
+    upgradeCfgCliResolver;
+    detectDepsCliResolver;
+    installDepsCliResolver;
+    couplingsCliResolver;
+    bulkInstallCliResolver;
+    bulkPublishCliResolver;
     /* ------------------------------------------------------------------------ */
-    init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, remotePackageLatestVersionCliResolver, packagePublishingCliResolver, localPackagesListingCliResolver, installPackageCliResolver, packageDiffingCliResolver, }) {
+    init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, remotePackageLatestVersionCliResolver, packagePublishingCliResolver, localPackagesListingCliResolver, installPackageCliResolver, packageDiffingCliResolver, initProjectCliResolver, initLibraryCliResolver, syncHostCliResolver, showUsageCliResolver, openDocsCliResolver, upgradeCfgCliResolver, detectDepsCliResolver, installDepsCliResolver, couplingsCliResolver, bulkInstallCliResolver, bulkPublishCliResolver, }) {
         this.verbose = verbose;
         this.localLibrary = localLibrary;
         this.remoteLibrary = remoteLibrary;
@@ -16,6 +36,17 @@ export class MainCommandsCliResolver {
         this.localPackagesListingCliResolver = localPackagesListingCliResolver;
         this.installPackageCliResolver = installPackageCliResolver;
         this.packageDiffingCliResolver = packageDiffingCliResolver;
+        this.initProjectCliResolver = initProjectCliResolver;
+        this.initLibraryCliResolver = initLibraryCliResolver;
+        this.syncHostCliResolver = syncHostCliResolver;
+        this.showUsageCliResolver = showUsageCliResolver;
+        this.openDocsCliResolver = openDocsCliResolver;
+        this.upgradeCfgCliResolver = upgradeCfgCliResolver;
+        this.detectDepsCliResolver = detectDepsCliResolver;
+        this.installDepsCliResolver = installDepsCliResolver;
+        this.couplingsCliResolver = couplingsCliResolver;
+        this.bulkInstallCliResolver = bulkInstallCliResolver;
+        this.bulkPublishCliResolver = bulkPublishCliResolver;
     }
     /* ------------------------------------------------------------------------ */
     async resolveMainCommandsPrompt() {
@@ -38,6 +69,33 @@ export class MainCommandsCliResolver {
             if (!this.installPackageCliResolver)
                 return;
             switch (answer) {
+                case INTERACTIVE_CLI_COMMANDS.initProject:
+                    await this.initProjectCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.initLibrary:
+                    await this.initLibraryCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.syncHost:
+                    await this.syncHostCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.showUsage:
+                    await this.showUsageCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.openDocs:
+                    await this.openDocsCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.upgradeCfg:
+                    await this.upgradeCfgCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.detectDeps:
+                    await this.detectDepsCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.installDeps:
+                    await this.installDepsCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.couplings:
+                    await this.couplingsCliResolver?.resolve();
+                    break;
                 case INTERACTIVE_CLI_COMMANDS.listInstalledPackages:
                     await this.localPackagesListingCliResolver.resolveSelectLibraryPrompt();
                     break;
@@ -53,6 +111,12 @@ export class MainCommandsCliResolver {
                     break;
                 case INTERACTIVE_CLI_COMMANDS.installPackage:
                     await this.installPackageCliResolver.resolveSelectLibraryPrompt();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.installMultiplePackages:
+                    await this.bulkInstallCliResolver?.resolveBulkInstallPrompt();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.publishMultiplePackages:
+                    await this.bulkPublishCliResolver?.resolveBulkPublishPrompt();
                     break;
                 case INTERACTIVE_CLI_COMMANDS.compareInstalledPackageWithRemote:
                     await this.packageDiffingCliResolver?.resolveSelectLibraryPrompt();

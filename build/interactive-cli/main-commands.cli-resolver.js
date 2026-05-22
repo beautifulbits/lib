@@ -24,8 +24,12 @@ export class MainCommandsCliResolver {
     couplingsCliResolver;
     bulkInstallCliResolver;
     bulkPublishCliResolver;
+    addContributionCliResolver;
+    generateRegistryCliResolver;
+    validateContributionsCliResolver;
+    migrateContributionTypesCliResolver;
     /* ------------------------------------------------------------------------ */
-    init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, remotePackageLatestVersionCliResolver, packagePublishingCliResolver, localPackagesListingCliResolver, installPackageCliResolver, packageDiffingCliResolver, initProjectCliResolver, initLibraryCliResolver, syncHostCliResolver, showUsageCliResolver, openDocsCliResolver, upgradeCfgCliResolver, detectDepsCliResolver, installDepsCliResolver, couplingsCliResolver, bulkInstallCliResolver, bulkPublishCliResolver, }) {
+    init({ verbose = true, localLibrary, remoteLibrary, mainCommandsCliPrompt, remotePackageLatestVersionCliResolver, packagePublishingCliResolver, localPackagesListingCliResolver, installPackageCliResolver, packageDiffingCliResolver, initProjectCliResolver, initLibraryCliResolver, syncHostCliResolver, showUsageCliResolver, openDocsCliResolver, upgradeCfgCliResolver, detectDepsCliResolver, installDepsCliResolver, couplingsCliResolver, bulkInstallCliResolver, bulkPublishCliResolver, addContributionCliResolver, generateRegistryCliResolver, validateContributionsCliResolver, migrateContributionTypesCliResolver, }) {
         this.verbose = verbose;
         this.localLibrary = localLibrary;
         this.remoteLibrary = remoteLibrary;
@@ -47,6 +51,10 @@ export class MainCommandsCliResolver {
         this.couplingsCliResolver = couplingsCliResolver;
         this.bulkInstallCliResolver = bulkInstallCliResolver;
         this.bulkPublishCliResolver = bulkPublishCliResolver;
+        this.addContributionCliResolver = addContributionCliResolver;
+        this.generateRegistryCliResolver = generateRegistryCliResolver;
+        this.validateContributionsCliResolver = validateContributionsCliResolver;
+        this.migrateContributionTypesCliResolver = migrateContributionTypesCliResolver;
     }
     /* ------------------------------------------------------------------------ */
     async resolveMainCommandsPrompt() {
@@ -77,6 +85,18 @@ export class MainCommandsCliResolver {
                     break;
                 case INTERACTIVE_CLI_COMMANDS.syncHost:
                     await this.syncHostCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.addContribution:
+                    await this.addContributionCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.generateRegistry:
+                    await this.generateRegistryCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.validateContributions:
+                    await this.validateContributionsCliResolver?.resolve();
+                    break;
+                case INTERACTIVE_CLI_COMMANDS.migrateContributionTypes:
+                    await this.migrateContributionTypesCliResolver?.resolve();
                     break;
                 case INTERACTIVE_CLI_COMMANDS.showUsage:
                     await this.showUsageCliResolver?.resolve();

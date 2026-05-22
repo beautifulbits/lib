@@ -63,6 +63,45 @@ export type TLibraryAiConfig = {
 };
 
 /**
+ * Library contribution declarations. A library opts in to the
+ * registry-codegen pipeline (`lib generate-registry`) by populating one or
+ * both sub-blocks. Both are independent — a library may declare i18n only,
+ * a tailwind plugin only, both, or neither.
+ *
+ * Naming is convention-driven from `cfg.name`:
+ *   - i18n exports: `<name>TranslationsEn` / `<name>TranslationsEs`
+ *   - tailwind factory: `create<PascalCase(name)>Plugin`
+ *
+ * Import paths are derived from `cfg.alias`:
+ *   - i18n:    `<alias>/<contributions.i18n.path>`           (e.g. `@tectonic/i18n`)
+ *   - plugin:  `<alias>/<contributions.tailwindPlugin.path>` (e.g. `@tectonic/tailwind-plugin`)
+ */
+export type TLibraryContributions = {
+  /**
+   * Library i18n contribution. The barrel must live at
+   * `<libRoot>/<path>/index.ts` and export both `<name>TranslationsEn`
+   * and `<name>TranslationsEs`.
+   */
+  i18n?: {
+    /** Directory relative to libRoot. Conventional value: `"i18n"`. */
+    path: string;
+  };
+  /**
+   * Library Tailwind plugin contribution. The entry must live at
+   * `<libRoot>/<path>/index.ts` and export `create<PascalCase(name)>Plugin`.
+   *
+   * Note: this is the Tailwind 3 plugin contract (a factory returning the
+   * value of `tailwindcss/plugin`'s default export). A Tailwind 4 variant
+   * (CSS-first config with `@plugin` directives) may follow as a separate
+   * field once the team adopts v4.
+   */
+  tailwindPlugin?: {
+    /** Directory relative to libRoot. Conventional value: `"tailwind-plugin"`. */
+    path: string;
+  };
+};
+
+/**
  * Manifest at `<library-root>/lib.cfg`. Read by `@beautifulbits/lib`.
  *
  * Existing fields (`name`, `library`, `collection`, `version`, `path`,
@@ -122,4 +161,12 @@ export type TPackageConfig = {
 
   /** AI-agent documentation registration. */
   ai?: TLibraryAiConfig;
+
+  /**
+   * Optional contributions a library projects into the host application via
+   * codegen (`lib generate-registry`). Currently i18n translations and
+   * Tailwind 3 plugins. Read-only from the CLI's perspective — populated
+   * by hand or via `lib add-contribution`.
+   */
+  contributions?: TLibraryContributions;
 };

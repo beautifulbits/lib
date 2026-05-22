@@ -19,6 +19,10 @@ import { InstallDepsCliResolver } from './install-deps.cli-resolver.js';
 import { CouplingsCliResolver } from './couplings.cli-resolver.js';
 import { BulkInstallCliResolver } from './bulk-install.cli-resolver.js';
 import { BulkPublishCliResolver } from './bulk-publish.cli-resolver.js';
+import { AddContributionCliResolver } from './add-contribution.cli-resolver.js';
+import { GenerateRegistryCliResolver } from './generate-registry.cli-resolver.js';
+import { ValidateContributionsCliResolver } from './validate-contributions.cli-resolver.js';
+import { MigrateContributionTypesCliResolver } from './migrate-contribution-types.cli-resolver.js';
 
 /* ================================ INTERFACE =============================== */
 interface IMainCommandsCliResolverInitFn {
@@ -42,6 +46,10 @@ interface IMainCommandsCliResolverInitFn {
   couplingsCliResolver: CouplingsCliResolver;
   bulkInstallCliResolver: BulkInstallCliResolver;
   bulkPublishCliResolver: BulkPublishCliResolver;
+  addContributionCliResolver: AddContributionCliResolver;
+  generateRegistryCliResolver: GenerateRegistryCliResolver;
+  validateContributionsCliResolver: ValidateContributionsCliResolver;
+  migrateContributionTypesCliResolver: MigrateContributionTypesCliResolver;
 }
 
 /* ========================================================================== */
@@ -68,6 +76,10 @@ export class MainCommandsCliResolver {
   couplingsCliResolver?: CouplingsCliResolver;
   bulkInstallCliResolver?: BulkInstallCliResolver;
   bulkPublishCliResolver?: BulkPublishCliResolver;
+  addContributionCliResolver?: AddContributionCliResolver;
+  generateRegistryCliResolver?: GenerateRegistryCliResolver;
+  validateContributionsCliResolver?: ValidateContributionsCliResolver;
+  migrateContributionTypesCliResolver?: MigrateContributionTypesCliResolver;
 
   /* ------------------------------------------------------------------------ */
   init({
@@ -91,6 +103,10 @@ export class MainCommandsCliResolver {
     couplingsCliResolver,
     bulkInstallCliResolver,
     bulkPublishCliResolver,
+    addContributionCliResolver,
+    generateRegistryCliResolver,
+    validateContributionsCliResolver,
+    migrateContributionTypesCliResolver,
   }: IMainCommandsCliResolverInitFn) {
     this.verbose = verbose;
     this.localLibrary = localLibrary;
@@ -113,6 +129,10 @@ export class MainCommandsCliResolver {
     this.couplingsCliResolver = couplingsCliResolver;
     this.bulkInstallCliResolver = bulkInstallCliResolver;
     this.bulkPublishCliResolver = bulkPublishCliResolver;
+    this.addContributionCliResolver = addContributionCliResolver;
+    this.generateRegistryCliResolver = generateRegistryCliResolver;
+    this.validateContributionsCliResolver = validateContributionsCliResolver;
+    this.migrateContributionTypesCliResolver = migrateContributionTypesCliResolver;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -142,6 +162,22 @@ export class MainCommandsCliResolver {
 
           case INTERACTIVE_CLI_COMMANDS.syncHost:
             await this.syncHostCliResolver?.resolve();
+            break;
+
+          case INTERACTIVE_CLI_COMMANDS.addContribution:
+            await this.addContributionCliResolver?.resolve();
+            break;
+
+          case INTERACTIVE_CLI_COMMANDS.generateRegistry:
+            await this.generateRegistryCliResolver?.resolve();
+            break;
+
+          case INTERACTIVE_CLI_COMMANDS.validateContributions:
+            await this.validateContributionsCliResolver?.resolve();
+            break;
+
+          case INTERACTIVE_CLI_COMMANDS.migrateContributionTypes:
+            await this.migrateContributionTypesCliResolver?.resolve();
             break;
 
           case INTERACTIVE_CLI_COMMANDS.showUsage:

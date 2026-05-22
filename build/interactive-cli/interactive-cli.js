@@ -16,6 +16,10 @@ import { InstallDepsCliResolver } from './install-deps.cli-resolver.js';
 import { CouplingsCliResolver } from './couplings.cli-resolver.js';
 import { BulkInstallCliResolver } from './bulk-install.cli-resolver.js';
 import { BulkPublishCliResolver } from './bulk-publish.cli-resolver.js';
+import { AddContributionCliResolver } from './add-contribution.cli-resolver.js';
+import { GenerateRegistryCliResolver } from './generate-registry.cli-resolver.js';
+import { ValidateContributionsCliResolver } from './validate-contributions.cli-resolver.js';
+import { MigrateContributionTypesCliResolver } from './migrate-contribution-types.cli-resolver.js';
 /* ========================================================================== */
 /*                               INTERACTIVE CLI                              */
 /* ========================================================================== */
@@ -43,6 +47,10 @@ export class InteractiveCli {
         const couplingsCliResolver = new CouplingsCliResolver();
         const bulkInstallCliResolver = new BulkInstallCliResolver();
         const bulkPublishCliResolver = new BulkPublishCliResolver();
+        const addContributionCliResolver = new AddContributionCliResolver();
+        const generateRegistryCliResolver = new GenerateRegistryCliResolver();
+        const validateContributionsCliResolver = new ValidateContributionsCliResolver();
+        const migrateContributionTypesCliResolver = new MigrateContributionTypesCliResolver();
         // Init class singletons
         // Done this way since the classes have circular dependencies
         // with each other
@@ -72,6 +80,10 @@ export class InteractiveCli {
             couplingsCliResolver,
             bulkInstallCliResolver,
             bulkPublishCliResolver,
+            addContributionCliResolver,
+            generateRegistryCliResolver,
+            validateContributionsCliResolver,
+            migrateContributionTypesCliResolver,
         });
         initProjectCliResolver.init({ mainCommandsCliResolver });
         initLibraryCliResolver.init({ mainCommandsCliResolver });
@@ -82,6 +94,10 @@ export class InteractiveCli {
         detectDepsCliResolver.init({ mainCommandsCliResolver });
         installDepsCliResolver.init({ mainCommandsCliResolver });
         couplingsCliResolver.init({ mainCommandsCliResolver });
+        addContributionCliResolver.init({ mainCommandsCliResolver });
+        generateRegistryCliResolver.init({ mainCommandsCliResolver });
+        validateContributionsCliResolver.init({ mainCommandsCliResolver });
+        migrateContributionTypesCliResolver.init({ mainCommandsCliResolver });
         localPackagesListingCliResolver.init({
             verbose,
             localLibrary,

@@ -28,6 +28,10 @@ export const INTERACTIVE_CLI_COMMANDS = {
     showUsage: `Show usage registry`,
     syncHost: `Sync host configuration`,
     updateInstalledPackage: 'Update installed package',
+    addContribution: `Add library contribution (i18n, optional tailwind plugin)`,
+    generateRegistry: `Generate library-contributions registry`,
+    validateContributions: `Validate library contributions`,
+    migrateContributionTypes: `Migrate placeholder contribution types to @beautifulbits/lib`,
 };
 export var VERSION_UPDATE_TYPES;
 (function (VERSION_UPDATE_TYPES) {

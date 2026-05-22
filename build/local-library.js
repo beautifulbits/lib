@@ -1,13 +1,24 @@
-import recursiveReaddir from 'recursive-readdir-async';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import consola from 'consola';
-import path from 'path';
 import { LIB_CONFIG_FILENAME, NEW_PACKAGE_INITIAL_VERSION, UNPUBLISHED_VERSION, VERSION_UPDATE_TYPES, VERSION_UPDATE_TYPE_SEMANTIC_SEPARATOR, } from './helpers/constants.js';
 import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
 import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
+import { listFiles, listSubdirectories } from './helpers/fs.js';
+import { readProjectIdentity } from './helpers/project-identity.js';
 /* ========================================================================== */
 /*                                LOCAL LIBRARY                               */
 /* ========================================================================== */
 export class LocalLibrary {
+    cliWorkingDir;
+    libConfigFiles;
+    libDir;
+    libPath;
+    packageFileGenerator;
+    packagesCatalog;
+    remoteLibrary;
+    usageRegistry;
+    verbose;
     /* ------------------------------------------------------------------------ */
     constructor() {
         this.packagesCatalog = {};
@@ -15,15 +26,22 @@ export class LocalLibrary {
         this.cliWorkingDir = process.cwd();
     }
     /* ------------------------------------------------------------------------ */
-    init({ localLibraryDirectory, verbose = false, packageFileGenerator, remoteLibrary, }) {
+    init({ localLibraryDirectory, verbose = false, packageFileGenerator, remoteLibrary, usageRegistry, }) {
         this.libDir = localLibraryDirectory;
         this.libPath = path.join(this.cliWorkingDir, this.libDir);
         this.packageFileGenerator = packageFileGenerator;
         this.remoteLibrary = remoteLibrary;
+        this.usageRegistry = usageRegistry;
         this.verbose = verbose;
     }
     /* =========================== SCANNING LIBRARY =========================== */
     /* ------------------------------------------------------------------------ */
+    /**
+     * Local libraries are organized as one top-level directory per library.
+     * Each library's `lib.cfg` lives at the library's root, so we don't need
+     * to recursively walk — listing immediate subdirectories of `libPath` and
+     * checking for a `lib.cfg` in each is O(N libraries).
+     */
     async findLibConfigFiles() {
         if (!this.libPath)
             return;
@@ -31,20 +49,32 @@ export class LocalLibrary {
             if (this.verbose) {
                 consola.log(`Scanning ${this.libPath} for modules.`);
             }
-            this.libConfigFiles = await recursiveReaddir.list(this.libPath, {
-                recursive: true,
-                ignoreFolders: true,
-                extensions: true,
-                readContent: true,
-                include: [LIB_CONFIG_FILENAME],
-                encoding: `utf8`,
-            });
+            const subdirs = await listSubdirectories(this.libPath);
+            const cfgFiles = await Promise.all(subdirs.map(async (dir) => {
+                const cfgPath = path.join(dir, LIB_CONFIG_FILENAME);
+                try {
+                    const data = await fs.readFile(cfgPath, 'utf8');
+                    return {
+                        name: LIB_CONFIG_FILENAME,
+                        title: 'lib',
+                        path: dir,
+                        fullname: cfgPath,
+                        extension: 'cfg',
+                        isDirectory: false,
+                        data,
+                    };
+                }
+                catch {
+                    return null;
+                }
+            }));
+            this.libConfigFiles = cfgFiles.filter((f) => f !== null);
             if (this.verbose) {
                 consola.log(`Found modules:`, this.libConfigFiles);
             }
         }
-        catch (recursiveReaddirError) {
-            consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+        catch (scanError) {
+            consola.error(`Unable to scan directory: ${scanError}`);
             process.exit(1);
         }
     }
@@ -95,7 +125,7 @@ export class LocalLibrary {
     /* ------------------------------------------------------------------------ */
     async showInstalledPackagesAsTable(selectedLibrary, selectedCollection, selectedPackage) {
         await this.getInstalledPackagesCatalog();
-        showPackagesAsTable(this.packagesCatalog, selectedLibrary, selectedCollection, selectedPackage);
+        await showPackagesAsTable(this.packagesCatalog, selectedLibrary, selectedCollection, selectedPackage, this.remoteLibrary);
     }
     /* ======================== GETTING PACKAGE DETAILS ======================= */
     /* ------------------------------------------------------------------------ */
@@ -146,44 +176,37 @@ export class LocalLibrary {
                 if (config.includeFromProjectRoot &&
                     Array.isArray(config.includeFromProjectRoot) &&
                     config.includeFromProjectRoot.length > 0) {
-                    const fromProjectRootFiles = await recursiveReaddir.list(this.cliWorkingDir, {
-                        ignoreFolders: true,
-                        extensions: true,
+                    const fromProjectRootFiles = await listFiles({
+                        cwd: this.cliWorkingDir,
+                        patterns: config.includeFromProjectRoot,
                         readContent: true,
-                        encoding: `utf8`,
-                        include: [...config.includeFromProjectRoot],
-                        exclude: ['node_modules'],
                     });
-                    const packageConfigFile = await recursiveReaddir.list(packagePath, {
-                        ignoreFolders: true,
-                        extensions: true,
+                    const packageConfigFile = await listFiles({
+                        cwd: packagePath,
+                        patterns: ['**/*'],
                         readContent: true,
-                        encoding: `utf8`,
                     });
                     files = [...fromProjectRootFiles, ...packageConfigFile];
                 }
                 else {
-                    files = await recursiveReaddir.list(packagePath, {
-                        ignoreFolders: true,
-                        extensions: true,
+                    files = await listFiles({
+                        cwd: packagePath,
+                        patterns: ['**/*'],
                         readContent: true,
-                        encoding: `utf8`,
                     });
                 }
-                const packageFiles = files.map((file) => {
-                    return {
-                        ...file,
-                        relativePath: file.path.replace(this.cliWorkingDir, ''),
-                    };
-                });
+                const packageFiles = files.map((file) => ({
+                    ...file,
+                    relativePath: file.path.replace(this.cliWorkingDir, ''),
+                }));
                 return {
                     path: packagePath,
                     config,
                     packageFiles,
                 };
             }
-            catch (recursiveReaddirError) {
-                consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+            catch (scanError) {
+                consola.error(`Unable to scan directory: ${scanError}`);
                 process.exit(1);
             }
         }
@@ -282,6 +305,18 @@ export class LocalLibrary {
                     collection: config.collection,
                     library: config.library,
                 });
+                // Best-effort usage registry update — never block publish on it.
+                if (this.usageRegistry) {
+                    try {
+                        await this.usageRegistry.recordPublish({
+                            libName: packageName,
+                            version: config.version,
+                        });
+                    }
+                    catch (err) {
+                        consola.warn(`usage registry not updated after publish: ${err.message}`);
+                    }
+                }
             }
         }
     }
@@ -316,6 +351,21 @@ export class LocalLibrary {
                 });
             }
             consola.log(`Package ${packageName}@${version} successfully installed!`);
+            // Best-effort usage registry update — never block install on it.
+            if (this.usageRegistry) {
+                try {
+                    const identity = await readProjectIdentity(this.cliWorkingDir);
+                    await this.usageRegistry.recordInstall({
+                        projectName: identity.name,
+                        projectPath: identity.path,
+                        libName: packageName,
+                        version,
+                    });
+                }
+                catch (err) {
+                    consola.warn(`usage registry not updated after install: ${err.message}`);
+                }
+            }
         }
     }
 }

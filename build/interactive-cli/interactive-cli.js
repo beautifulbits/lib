@@ -5,10 +5,26 @@ import { PackagePublishingCliResolver } from './package-publishing.cli-resolver.
 import { RemotePackageLatestVersionCliResolver } from './remote-package-latest-version.cli-resolver.js';
 import { InstallPackageCliResolver } from './install-package.cli-resolver.js';
 import { PackageDiffingCliResolver } from './package-diffing.cli-resolver.js';
+import { InitProjectCliResolver } from './init-project.cli-resolver.js';
+import { InitLibraryCliResolver } from './init-library.cli-resolver.js';
+import { SyncHostCliResolver } from './sync-host.cli-resolver.js';
+import { ShowUsageCliResolver } from './show-usage.cli-resolver.js';
+import { OpenDocsCliResolver } from './open-docs.cli-resolver.js';
+import { UpgradeCfgCliResolver } from './upgrade-cfg.cli-resolver.js';
+import { DetectDepsCliResolver } from './detect-deps.cli-resolver.js';
+import { InstallDepsCliResolver } from './install-deps.cli-resolver.js';
+import { CouplingsCliResolver } from './couplings.cli-resolver.js';
+import { BulkInstallCliResolver } from './bulk-install.cli-resolver.js';
+import { BulkPublishCliResolver } from './bulk-publish.cli-resolver.js';
+import { AddContributionCliResolver } from './add-contribution.cli-resolver.js';
+import { GenerateRegistryCliResolver } from './generate-registry.cli-resolver.js';
+import { ValidateContributionsCliResolver } from './validate-contributions.cli-resolver.js';
+import { MigrateContributionTypesCliResolver } from './migrate-contribution-types.cli-resolver.js';
 /* ========================================================================== */
 /*                               INTERACTIVE CLI                              */
 /* ========================================================================== */
 export class InteractiveCli {
+    mainCommandsCliResolver;
     /* ------------------------------------------------------------------------ */
     constructor({ verbose = true, localLibrary, remoteLibrary, packageDiffing, }) {
         // Instantiate prompts
@@ -20,6 +36,21 @@ export class InteractiveCli {
         const remotePackageLatestVersionCliResolver = new RemotePackageLatestVersionCliResolver();
         const installPackageCliResolver = new InstallPackageCliResolver();
         const packageDiffingCliResolver = new PackageDiffingCliResolver();
+        const initProjectCliResolver = new InitProjectCliResolver();
+        const initLibraryCliResolver = new InitLibraryCliResolver();
+        const syncHostCliResolver = new SyncHostCliResolver();
+        const showUsageCliResolver = new ShowUsageCliResolver();
+        const openDocsCliResolver = new OpenDocsCliResolver();
+        const upgradeCfgCliResolver = new UpgradeCfgCliResolver();
+        const detectDepsCliResolver = new DetectDepsCliResolver();
+        const installDepsCliResolver = new InstallDepsCliResolver();
+        const couplingsCliResolver = new CouplingsCliResolver();
+        const bulkInstallCliResolver = new BulkInstallCliResolver();
+        const bulkPublishCliResolver = new BulkPublishCliResolver();
+        const addContributionCliResolver = new AddContributionCliResolver();
+        const generateRegistryCliResolver = new GenerateRegistryCliResolver();
+        const validateContributionsCliResolver = new ValidateContributionsCliResolver();
+        const migrateContributionTypesCliResolver = new MigrateContributionTypesCliResolver();
         // Init class singletons
         // Done this way since the classes have circular dependencies
         // with each other
@@ -38,7 +69,35 @@ export class InteractiveCli {
             remotePackageLatestVersionCliResolver,
             installPackageCliResolver,
             packageDiffingCliResolver,
+            initProjectCliResolver,
+            initLibraryCliResolver,
+            syncHostCliResolver,
+            showUsageCliResolver,
+            openDocsCliResolver,
+            upgradeCfgCliResolver,
+            detectDepsCliResolver,
+            installDepsCliResolver,
+            couplingsCliResolver,
+            bulkInstallCliResolver,
+            bulkPublishCliResolver,
+            addContributionCliResolver,
+            generateRegistryCliResolver,
+            validateContributionsCliResolver,
+            migrateContributionTypesCliResolver,
         });
+        initProjectCliResolver.init({ mainCommandsCliResolver });
+        initLibraryCliResolver.init({ mainCommandsCliResolver });
+        syncHostCliResolver.init({ mainCommandsCliResolver });
+        showUsageCliResolver.init({ mainCommandsCliResolver });
+        openDocsCliResolver.init({ mainCommandsCliResolver });
+        upgradeCfgCliResolver.init({ mainCommandsCliResolver });
+        detectDepsCliResolver.init({ mainCommandsCliResolver });
+        installDepsCliResolver.init({ mainCommandsCliResolver });
+        couplingsCliResolver.init({ mainCommandsCliResolver });
+        addContributionCliResolver.init({ mainCommandsCliResolver });
+        generateRegistryCliResolver.init({ mainCommandsCliResolver });
+        validateContributionsCliResolver.init({ mainCommandsCliResolver });
+        migrateContributionTypesCliResolver.init({ mainCommandsCliResolver });
         localPackagesListingCliResolver.init({
             verbose,
             localLibrary,
@@ -72,6 +131,21 @@ export class InteractiveCli {
             verbose,
             localLibrary,
             remoteLibrary,
+            mainCommandsCliPrompt,
+            mainCommandsCliResolver,
+        });
+        bulkInstallCliResolver.init({
+            verbose,
+            localLibrary,
+            remoteLibrary,
+            mainCommandsCliPrompt,
+            mainCommandsCliResolver,
+        });
+        bulkPublishCliResolver.init({
+            verbose,
+            localLibrary,
+            remoteLibrary,
+            packageDiffing,
             mainCommandsCliPrompt,
             mainCommandsCliResolver,
         });

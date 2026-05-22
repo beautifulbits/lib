@@ -1,6 +1,5 @@
-import recursiveReaddir from 'recursive-readdir-async';
+import path from 'node:path';
 import consola from 'consola';
-import path from 'path';
 import boxen from 'boxen';
 import { showPackagesAsTable } from './helpers/show-packages-as-table.js';
 import { showVersionsAsTable } from './helpers/show-versions-as-table.js';
@@ -8,13 +7,16 @@ import {
   LIB_CONFIG_FILENAME,
   UNPUBLISHED_VERSION,
 } from './helpers/constants.js';
+import { listFiles } from './helpers/fs.js';
 import { PackageFileGenerator } from './package-file-generator.js';
 import { getPackagesFromCatalog } from './helpers/get-packages-from-catalog.js';
-import { TPackageMetadata } from './@types/package-metadata';
-import { TPackagesCatalog } from './@types/packages-catalog';
-import { TReaddirFileExtended } from './@types/readdir-file';
-import { TReaddirFile } from './@types/readdir-file';
-import { TPackageConfig } from './@types/package-config';
+import type { TPackageMetadata } from './@types/package-metadata.js';
+import type { TPackagesCatalog } from './@types/packages-catalog.js';
+import type {
+  TReaddirFile,
+  TReaddirFileExtended,
+} from './@types/readdir-file.js';
+import type { TPackageConfig } from './@types/package-config.js';
 import { LocalLibrary } from './local-library.js';
 
 /* ================================ INTERFACE =============================== */
@@ -29,7 +31,7 @@ interface IRemoteLibraryInitFn {
 /*                               REMOTE LIBRARY                               */
 /* ========================================================================== */
 export class RemoteLibrary {
-  libConfigFiles: TReaddirFileExtended[];
+  libConfigFiles: TReaddirFile[];
   localLibrary?: LocalLibrary;
   packageFileGenerator?: PackageFileGenerator;
   packagesCatalog: TPackagesCatalog;
@@ -58,6 +60,11 @@ export class RemoteLibrary {
   /* =========================== SCANNING LIBRARY =========================== */
 
   /* ------------------------------------------------------------------------ */
+  /**
+   * Remote libraries are organized as `library/collection/name/version/lib.cfg`,
+   * so we still need a recursive scan — but a glob is faster and more focused
+   * than a full readdir of every file.
+   */
   async findLibConfigFiles() {
     try {
       if (!this.remoteLibraryPath) return;
@@ -66,22 +73,17 @@ export class RemoteLibrary {
         consola.log(`Scanning ${this.remoteLibraryPath} for modules.`);
       }
 
-      this.libConfigFiles = await recursiveReaddir.list(
-        this.remoteLibraryPath,
-        {
-          ignoreFolders: true,
-          extensions: true,
-          readContent: true,
-          include: [LIB_CONFIG_FILENAME],
-          encoding: `utf8`,
-        },
-      );
+      this.libConfigFiles = await listFiles({
+        cwd: this.remoteLibraryPath,
+        patterns: [`**/${LIB_CONFIG_FILENAME}`],
+        readContent: true,
+      });
 
       if (this.verbose) {
         consola.log(`Found remote modules:`, this.libConfigFiles);
       }
-    } catch (recursiveReaddirError) {
-      consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+    } catch (scanError) {
+      consola.error(`Unable to scan directory: ${scanError}`);
       process.exit(1);
     }
   }
@@ -158,7 +160,7 @@ export class RemoteLibrary {
   ) {
     await this.getPublishedPackagesCatalog();
 
-    showPackagesAsTable(
+    await showPackagesAsTable(
       this.packagesCatalog,
       selectedLibrary,
       selectedCollection,
@@ -285,39 +287,31 @@ export class RemoteLibrary {
       );
 
       if (packageMetadata) {
-        const { path, config } = packageMetadata;
+        const { path: pkgPath, config } = packageMetadata;
         try {
-          const files = await recursiveReaddir.list(path, {
-            ignoreFolders: true,
-            extensions: true,
+          const files = await listFiles({
+            cwd: pkgPath,
+            patterns: ['**/*'],
             readContent: true,
-            encoding: `utf8`,
           });
 
-          const remoteLibraryPath = this.remoteLibraryPath
-            ? this.remoteLibraryPath
-            : '';
+          const remoteLibraryPath = this.remoteLibraryPath ?? '';
           if (!this.remoteLibraryPath) {
             consola.warn(`RemoteLibrary.remoteLibraryPath is not defined.`);
           }
 
-          const packageFiles: TReaddirFileExtended[] = files.map(
-            (file: TReaddirFile) => {
-              if (!this.remoteLibraryPath) return;
-              return {
-                ...file,
-                relativePath: file.path.replace(remoteLibraryPath, ''),
-              };
-            },
-          );
+          const packageFiles: TReaddirFileExtended[] = files.map((file) => ({
+            ...file,
+            relativePath: file.path.replace(remoteLibraryPath, ''),
+          }));
 
           return {
-            path,
+            path: pkgPath,
             config,
             packageFiles,
           };
-        } catch (recursiveReaddirError) {
-          consola.error(`Unable to scan directory: ${recursiveReaddirError}`);
+        } catch (scanError) {
+          consola.error(`Unable to scan directory: ${scanError}`);
           process.exit(1);
         }
       } else {

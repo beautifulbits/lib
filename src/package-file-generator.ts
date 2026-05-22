@@ -1,10 +1,8 @@
-import consolaGlobalInstance from 'consola';
-import fs from 'fs';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import boxen from 'boxen';
-import mkdirp from 'mkdirp';
 import consola from 'consola';
-import { TPackageConfig } from './@types/package-config';
+import type { TPackageConfig } from './@types/package-config.js';
 import {
   LIB_CONFIG_FILENAME,
   NEW_PACKAGE_INITIAL_VERSION,
@@ -24,8 +22,8 @@ export class PackageFileGenerator {
   /* ------------------------------------------------------------------------ */
   async deleteDirectory(path: string) {
     try {
-      await fs.promises.access(path);
-      await fs.promises.rm(path, { recursive: true });
+      await fs.access(path);
+      await fs.rm(path, { recursive: true });
     } catch {
       if (this.verbose) {
         consola.warn(
@@ -67,14 +65,14 @@ export class PackageFileGenerator {
 
     try {
       const configFilePath = path.join(packagePath, LIB_CONFIG_FILENAME);
-      await fs.promises.writeFile(configFilePath, fileContents);
+      await fs.writeFile(configFilePath, fileContents);
       if (this.verbose) {
         consola.log(
           `Config file for package ${name} created: ${configFilePath}`,
         );
       }
     } catch (writeFileError) {
-      consolaGlobalInstance.error(
+      consola.error(
         `Unable to create config file for ${name}:`,
         writeFileError,
       );
@@ -100,16 +98,16 @@ export class PackageFileGenerator {
       // First create directory for output file before attempting to
       // create the file
       try {
-        await fs.promises.access(directoryPath);
+        await fs.access(directoryPath);
       } catch {
-        await mkdirp(directoryPath);
+        await fs.mkdir(directoryPath, { recursive: true });
         if (this.verbose) {
           consola.log(`Directory created: ${directoryPath}`);
         }
       }
 
       // Create the file
-      await fs.promises.writeFile(filePath, fileContents);
+      await fs.writeFile(filePath, fileContents);
       if (this.verbose) {
         consola.log(
           boxen(fileContents, {

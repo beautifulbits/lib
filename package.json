@@ -1,12 +1,21 @@
 {
   "name": "@beautifulbits/lib",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Shared code manager",
   "main": "./build/index.js",
   "bin": "./build/exec.js",
+  "files": [
+    "build",
+    "docs/dist"
+  ],
   "scripts": {
+    "build": "tsc && yarn docs:build",
+    "build:ts": "tsc",
     "start": "tsc -w",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest",
+    "docs:dev": "astro dev --root docs --port 7301",
+    "docs:build": "astro build --root docs",
+    "docs:preview": "astro preview --root docs --port 7301"
   },
   "repository": {
     "type": "git",
@@ -15,7 +24,6 @@
   "keywords": [
     "shared",
     "library",
-    "shared",
     "components",
     "code",
     "manager"
@@ -28,32 +36,22 @@
   },
   "homepage": "https://github.com/beautifulbits/lib#readme",
   "dependencies": {
-    "boxen": "^7.0.0",
+    "boxen": "^7.1.1",
     "cli-table": "^0.3.11",
-    "consola": "^2.15.3",
-    "diff": "^5.1.0",
-    "enquirer": "^2.3.6",
-    "mkdirp": "^1.0.4",
-    "recursive-readdir-async": "^1.2.1",
-    "yargs": "^17.6.0"
+    "clipanion": "^4.0.0-rc.4",
+    "consola": "^3.2.3",
+    "diff": "^5.2.0",
+    "enquirer": "^2.4.1",
+    "fast-glob": "^3.3.2",
+    "typanion": "^3.14.0"
   },
   "devDependencies": {
-    "@types/boxen": "^3.0.1",
-    "@types/cli-table": "^0.3.1",
-    "@types/consola": "^2.2.5",
-    "@types/diff": "^5.0.2",
-    "@types/mkdirp": "^1.0.2",
-    "@types/node": "^18.8.5",
-    "@types/source-map-support": "^0.5.6",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
-    "eslint": "^8.25.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^27.1.2",
-    "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.7.1",
-    "source-map-support": "^0.5.21",
-    "typescript": "^4.8.4"
+    "@astrojs/starlight": "^0.30.0",
+    "@types/cli-table": "^0.3.4",
+    "@types/diff": "^5.2.3",
+    "@types/node": "^22.13.4",
+    "astro": "^5.0.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.0"
   }
 }

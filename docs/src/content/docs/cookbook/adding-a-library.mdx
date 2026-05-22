@@ -1,0 +1,180 @@
+---
+title: Adding a library
+description: Walk through creating a brand-new shared library with full host-wiring support.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+This recipe creates a new library called `mylib` from scratch, makes it
+publishable, and gets its host wiring right.
+
+## 1. Create the library folder
+
+Inside the project where you'll author the library:
+
+```
+src/lib/
+  mylib/
+    index.ts
+    lib.cfg
+```
+
+Minimal `lib.cfg` — enough for `lib publish` to recognize it:
+
+```jsonc
+{
+  "name": "mylib",
+  "library": "frameworks",
+  "collection": "react",
+  "version": "0.1.0",
+  "path": "/src/lib/mylib",
+  "date": "Wed, 08 Apr 2026 10:56:51 GMT"
+}
+```
+
+`name`, `library`, `collection` are yours to choose. `library` is the
+top-level grouping in your remote library; `collection` is a sub-grouping
+(e.g., `react`, `node`, `cli`).
+
+<Aside type="tip">
+You can also create the file via the interactive menu — `yarn lib`, then
+choose `Init package (directory)`.
+</Aside>
+
+## 2. Add host-wiring fields
+
+Edit `lib.cfg` to declare what the library needs from a host:
+
+```jsonc
+{
+  "name": "mylib",
+  "library": "frameworks",
+  "collection": "react",
+  "version": "0.1.0",
+  "path": "/src/lib/mylib",
+  "date": "Wed, 08 Apr 2026 10:56:51 GMT",
+
+  "description": "MyLib — a small shared utility library.",
+  "alias": "@mylib",
+  "stacks": ["any"],
+
+  "dependencies": {
+    "react": ">=18"
+  },
+
+  "workflows": {
+    "test":      { "pattern": "src/lib/mylib" },
+    "storybook": { "configDir": "src/lib/mylib/.storybook", "port": 7110 },
+    "docs":      { "root": "src/lib/mylib/docs", "port": 7210 }
+  }
+}
+```
+
+<Steps>
+1. **Pick unique ports.** Convention: `71xx` for storybook, `72xx` for docs.
+   Avoid collisions with other libraries in any host you'll sync into.
+
+2. **`stacks`** — most React-and-Node libraries can stay on `["any"]`. Use
+   `["next"]` only if the library is genuinely Next-specific (e.g., touches
+   `next/headers`).
+
+3. **`alias`** — keep the `@<name>` convention. The `@` lets you import as
+   `@mylib/...` and visually distinguishes from npm packages.
+</Steps>
+
+## 3. (Optional) Add per-library tooling
+
+The library carries its own `.storybook/`, tests, docs, and `CLAUDE.md`.
+None of these are required.
+
+```
+src/lib/mylib/
+  .storybook/
+    main.ts                    # storybook config — points stories to ./
+    preview.ts
+  docs/                        # Starlight site for the library
+    astro.config.mjs
+    src/content/docs/index.mdx
+  CLAUDE.md                    # AI agent instructions
+  index.ts
+  lib.cfg
+  *.spec.ts                    # tests (or in __gen__/ per your output style)
+  *.stories.tsx
+```
+
+If `CLAUDE.md` exists, declare it:
+
+```jsonc
+"ai": {
+  "claudeMd": "CLAUDE.md"
+}
+```
+
+## 4. Test in the same project
+
+Run sync and verify:
+
+```bash
+yarn lib sync mylib --dry-run
+```
+
+You should see the per-library patches it would apply. When that looks
+right:
+
+```bash
+yarn lib sync
+yarn install   # pick up any new deps
+```
+
+Now `import x from '@mylib'` should work, and `yarn test:mylib` /
+`yarn storybook:mylib` / `yarn docs:mylib` are available.
+
+## 5. Publish to the remote library
+
+```bash
+yarn lib   # interactive menu → Publish package → mylib → patch/minor/major
+```
+
+This snapshots the library at the chosen version into the remote library
+and updates the [usage registry](/commands/usage/).
+
+## 6. Install in another project
+
+In another consuming project:
+
+```bash
+yarn lib   # → Install package → mylib
+yarn lib sync
+yarn install
+```
+
+The library and all its host wiring lands. Re-run `yarn lib sync` after
+each library update to pick up new wiring.
+
+## Common authoring questions
+
+### Where do the library's tests run?
+
+The library carries `*.spec.ts` (or `__gen__/*.spec.ts`) files. After
+sync, the host has a `test:mylib` script. Default `yarn test` ignores
+`src/lib/**`.
+
+### Where does the library's Storybook config live?
+
+In `src/lib/mylib/.storybook/main.ts` — fully owned by the library. It
+gets synced when the library is installed in any host. After sync, the host
+has a `storybook:mylib` script that points `--config-dir` at it.
+
+### Where do the library's docs live?
+
+In `src/lib/mylib/docs/` — a complete Starlight project (sibling of the
+library code, no `package.json`). Astro/Starlight are listed in the
+library's `lib.cfg` `devDependencies` so any host syncing the library has
+them in `node_modules`.
+
+### Can I publish without all the new fields?
+
+Yes — the new host-wiring fields are all optional. A library with only the
+existing fields (`name`, `library`, etc.) publishes and installs as it
+always has. `lib sync` simply does fewer per-library patches for that
+library.

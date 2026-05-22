@@ -6,6 +6,7 @@ const SHARED_LIB_CFG_FILENAME = 'sharedlib.cfg';
 /*                                 GET CONFIG                                 */
 /* ========================================================================== */
 export class GetConfig {
+    cliWorkingDir;
     /* ------------------------------------------------------------------------ */
     constructor() {
         this.cliWorkingDir = process.cwd();

@@ -1,4 +1,4 @@
-import { TPackagesCatalog } from '../@types/packages-catalog';
+import type { TPackagesCatalog } from '../@types/packages-catalog.js';
 
 export function getPackagesFromCatalog(
   packagesCatalog: TPackagesCatalog,

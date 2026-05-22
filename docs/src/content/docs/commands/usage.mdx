@@ -1,0 +1,104 @@
+---
+title: lib usage
+description: Inspect the centralized usage registry — which projects use which libraries at which versions.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+`lib usage` reads `<remoteLibraryPath>/_meta/usage.json` and prints which
+projects use which libraries at which versions. The registry is written
+automatically by `publish`, `install`, and `sync` — you never edit it by hand.
+
+```bash
+yarn lib usage                          # summary
+yarn lib usage --library schematic      # who uses one library
+yarn lib usage --project workbench-ui   # what does one project have
+yarn lib usage --json                   # raw JSON
+```
+
+## Output examples
+
+<Tabs>
+<TabItem label="summary">
+```
+@beautifulbits/lib usage  →  /Users/you/Code/workbench-ui
+registry: 2026-05-05T13:42:00.000Z
+
+Projects (2)
+  lifescore-backend — 1 lib
+  workbench-ui — 3 libs
+
+Libraries (3)
+  schematic@2.5.0 — 2 consumers
+  synchronic@0.1.0 — 1 consumer
+  tectonic@1.6.0 — 1 consumer
+```
+</TabItem>
+
+<TabItem label="--library">
+```
+@schematic@2.5.0
+
+Consumers
+  lifescore-backend @ 2.4.0  (latest: 2.5.0)
+  workbench-ui @ 2.5.0
+```
+
+The `(latest: ...)` annotation flags consumers on a stale version.
+</TabItem>
+
+<TabItem label="--project">
+```
+workbench-ui
+  path: /Users/you/Code/workbench-ui
+  last seen: 2026-05-05T13:42:00.000Z
+
+Libraries
+  schematic @ 2.5.0
+  synchronic @ 0.1.0
+  tectonic @ 1.6.0
+```
+</TabItem>
+
+<TabItem label="--json">
+The raw `usage.json` contents, identical to what's on disk. Pipe through
+`jq` for ad-hoc queries:
+
+```bash
+yarn lib usage --json | jq '.libraries.schematic.consumers'
+```
+</TabItem>
+</Tabs>
+
+## How the registry is populated
+
+| Action | What gets written |
+|---|---|
+| `lib publish` | `libraries.<name>.currentVersion` set to the new version |
+| `lib install` | `projects.<host>.libraries.<lib>` set; `consumers` updated |
+| `lib sync` | `projects.<host>.lastSeen` refreshed; project's library list reset to currently-installed set |
+| `lib uninstall` (future) | `projects.<host>.libraries.<lib>` removed; project dropped if empty |
+
+The denormalized `libraries` block is rebuilt on every write from the
+`projects` records, while preserving any `currentVersion` set by `publish`.
+This means a just-published library that no one consumes yet still appears
+in the libraries view with its `currentVersion`, no consumers.
+
+## Where it lives
+
+`<remoteLibraryPath>/_meta/usage.json`. Atomic writes (`write tmp + rename`)
+ensure readers always see a valid file. No locking — project names are
+unique by convention.
+
+<Aside type="caution">
+The remote library is shared across all your projects. Treat `usage.json`
+as informational state — never edit it by hand. If it gets corrupted, you
+can delete it and the registry will rebuild itself from the next
+publish/install/sync cycle (though the `installedAt` timestamps will reset).
+</Aside>
+
+## Schema version
+
+The current schema is version `1`. `lib usage` refuses to load a registry
+written by a newer version of `@beautifulbits/lib` — upgrade the CLI in any
+project that needs to read it.

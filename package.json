@@ -1,9 +1,11 @@
 {
   "name": "@beautifulbits/lib",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Shared code manager",
   "main": "./build/index.js",
-  "bin": "./build/exec.js",
+  "bin": {
+    "lib": "build/exec.js"
+  },
   "files": [
     "build",
     "docs/dist"

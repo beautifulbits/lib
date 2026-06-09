@@ -21,6 +21,7 @@ export const DEFAULT_IGNORES = [
   '**/coverage/**',
   '**/.cache/**',
   '**/__gen__/**',
+  '**/.DS_Store',
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -50,7 +51,7 @@ export async function listFiles({
     cwd,
     absolute: true,
     onlyFiles: true,
-    dot: false,
+    dot: true,
     ignore: [...DEFAULT_IGNORES, ...ignore],
   });
 
